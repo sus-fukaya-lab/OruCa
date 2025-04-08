@@ -2,7 +2,7 @@ services:
  # 開発用 Vite
   vite:
     image: node:20
-    container_name: vite
+    container_name: ORuCa_vite
     working_dir: /app
     volumes:
       - ./vite:/app:rw
@@ -17,7 +17,7 @@ services:
   # 本番用 Nginx
   web:
     image: nginx:latest
-    container_name: web
+    container_name: ORuCa_web
     ports:
       - "4000:80"
     volumes:
@@ -33,7 +33,7 @@ services:
   mysql:
     build:
       context: mysql
-    container_name: mysql
+    container_name: ORuCa_mysql
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: my_database
@@ -56,7 +56,7 @@ services:
     image: node:20-alpine
     build:
       context: api
-    container_name: api
+    container_name: ORuCa_api
     ports:
       - "3000:3000"
     depends_on:
@@ -64,6 +64,21 @@ services:
         condition: service_healthy
     networks:
       - backend
+
+  nfc:
+    image: python:3.13-alpine
+    build:
+      context: nfc  # Dockerfileが存在するディレクトリ
+    working_dir: /app
+    volumes:
+      - ./nfc:/app:rw
+    ports:
+      - "8000:8000"  # コンテナ内のポート8000をホストのポート8000にバインド
+    environment:
+      - TZ=Asia/Tokyo  # 必要に応じて環境変数の追加
+    command: ["python","main.py"]
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"  # USBデバイスをコンテナに渡す
 
 networks:
   backend:
