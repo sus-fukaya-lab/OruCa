@@ -1,0 +1,20 @@
+{
+  "name": "api-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "tsc -b && node ./server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mysql2": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/mysql2": "types/mysql2",
+    "@types/node": "^22.13.10",
+    "cors": "^2.8.5",
+    "typescript": "^5.8.2"
+  }
+}

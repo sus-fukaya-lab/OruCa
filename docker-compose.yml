@@ -1,0 +1,70 @@
+services:
+ # 開発用 Vite
+  vite:
+    image: node:20
+    container_name: vite
+    working_dir: /app
+    volumes:
+      - ./vite:/app:rw
+    ports:
+      - "4000:4000"
+    command: ["tail","-f","/dev/null"]
+    networks:
+      - backend
+    profiles:
+      - "dev"
+
+  # 本番用 Nginx
+  web:
+    image: nginx:latest
+    container_name: web
+    ports:
+      - "4000:80"
+    volumes:
+      - ./vite/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+    networks:
+      - backend
+    profiles:
+      - "prod"
+
+
+  mysql:
+    build:
+      context: mysql
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: my_database
+      MYSQL_USER: my_user
+      MYSQL_PASSWORD: my_password
+    volumes:
+      - ./mysql/data/init.sql:/docker-entrypoint-initdb.d/init.sql  # SQLファイルをコンテナ内にマウント
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+    networks:
+      - backend
+
+  api:
+    image: node:20-alpine
+    build:
+      context: api
+    container_name: api
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
