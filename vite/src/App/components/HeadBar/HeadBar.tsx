@@ -1,5 +1,5 @@
 import React from "react";
-import {Heading, HStack, Icon, VStack ,Box} from "@chakra-ui/react";
+import {Heading, HStack, Icon, VStack ,Box,Text} from "@chakra-ui/react";
 import { FaAnchor } from "react-icons/fa";
 
 type THeadBar = {
@@ -10,18 +10,19 @@ type THeadBar = {
 const HeadBar: React.FC<THeadBar> = ({ otherElements, children }) => {
 	return (
 		<VStack
-			pl={8}
-			pr={8}
 			w={"100vw"}
 			h={"100vh"}
-			gap={3}
+			gap={0}
 		>
 			<HStack
 				w={"100%"}
-				pt={3}
+				px={4}
+				py={3}
 				justifyContent={"space-between"}
+				borderBottomWidth={1}
+				shadow={"xs"}
 			>
-				<VStack gapY={0}>
+				<VStack gap={0}>
 					<HStack
 						w={"100%"}
 						gap={2}
@@ -38,7 +39,7 @@ const HeadBar: React.FC<THeadBar> = ({ otherElements, children }) => {
 							pb={1}
 						>OruCa</Heading>
 					</HStack>
-					<Heading size="md">FeliCa 在室管理システム</Heading>
+					<Text fontFamily={"monospace"} fontSize={"sm"} fontWeight={"semibold"}>FeliCa 在室管理システム</Text>
 				</VStack>
 				{otherElements?.map((e,index) => (
 					<React.Fragment key={`HeadBarOtherElements-${index}`}>

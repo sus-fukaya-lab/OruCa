@@ -33,12 +33,14 @@ services:
   mysql:
     build:
       context: mysql
+      args:
+        MYSQL_DATABASE : ${MYSQL_DATABASE}
+        MYSQL_USER : ${MYSQL_USER}
+        MYSQL_PASSWORD : ${MYSQL_PASSWORD}
+        MYSQL_ROOT_PASSWORD : ${MYSQL_ROOT_PASSWORD}
     container_name: ORuCa_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: my_database
-      MYSQL_USER: my_user
-      MYSQL_PASSWORD: my_password
+    env_file:
+      - .env
     volumes:
       - ./mysql/data/init.sql:/docker-entrypoint-initdb.d/init.sql  # SQLファイルをコンテナ内にマウント
     ports:
@@ -57,6 +59,8 @@ services:
     build:
       context: api
     container_name: ORuCa_api
+    env_file:
+      - .env
     ports:
       - "3000:3000"
     depends_on:

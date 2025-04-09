@@ -1,5 +1,4 @@
-import DataTable from "@components/DataTable";
-import { Box,VStack,Text} from "@chakra-ui/react";
+import DataTable from "@pages/MainPage/DataTable";
 import HeadBar from "@components/HeadBar/HeadBar";
 import SettingButton from "@components/SettingButton";
 
@@ -9,9 +8,7 @@ function MainPage() {
 			<HeadBar otherElements={[
 				<SettingButton address="/admin"/>
 			]}>
-				<Box>
-					<DataTable />
-				</Box>
+				<DataTable />
 			</HeadBar>
 		</>
 	);

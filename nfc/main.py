@@ -44,31 +44,7 @@ def on_connect(tag:Tag):
     return True
 
 def on_release(tag):
-    print("released")
-    
-    # # APIからデータを取得
-    # response = requests.get(API_URL + "/fetch")
-    
-    # # APIが正常にレスポンスを返した場合
-    # if response.status_code == 200:
-    #     # JSONデータをパース
-    #     data = response.json()
-        
-    #     # データがリストの形式で {idm, pmm, timestamp} の配列で返されることを仮定
-    #     if isinstance(data, list):
-    #         for entry in data:
-    #             # 各エントリが辞書形式 {idm, pmm, timestamp}
-    #             idm = entry.get("idm")
-    #             pmm = entry.get("pmm")
-    #             timestamp = entry.get("timestamp")
-                
-    #             # 各データを出力
-    #             print(f"IDm: {idm}, PMm: {pmm}, Timestamp: {timestamp}")
-    #     else:
-    #         print("APIのデータ形式が予期したものではありません。")
-    # else:
-    #     print(f"APIリクエストが失敗しました。ステータスコード: {response.status_code}")
-    # exit()
+    print("released")    
     return True
 
 
