@@ -1,5 +1,6 @@
 table {
-	width: 500px;
+	width: 700px;
+	height: fit-content;
 	margin: 20px auto;
 	border-collapse: collapse;
 	border-radius: 12px;
@@ -41,7 +42,14 @@ th {
 td {
 	color: #333;
 }
-
+td:nth-child(1){
+	font-family: 'Courier New', Courier, monospace;
+	font-size: 110%;
+	font-weight: 600;
+}
+td:nth-child(3) {
+	font-size: 110%;
+}
 h1 {
 	text-align: center;
 	margin-top: 40px;

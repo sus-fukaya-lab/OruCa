@@ -18,6 +18,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // WebSocketのプロキシ設定
+      '/socket': {
+        target: 'ws://api:3000',  // WebSocket接続先を指定
+        ws: true,  // WebSocketプロキシを有効化
+        changeOrigin: true,
+        rewriteWsOrigin: true,
+      },
     },
   }
 })
