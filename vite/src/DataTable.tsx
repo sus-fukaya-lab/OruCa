@@ -1,25 +1,43 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import './DataTable.css';
 import DeleteTooltip from './DeleteToolTip';  // Tooltipコンポーネントをインポート
+import * as fns from "date-fns";
+import Badge from './Badge';
+
+const API_URL = "http://api:3000"
+
+function formatTime(utcString:string){
+	// ISO 8601形式の文字列をDateオブジェクトに変換
+	const date = fns.parseISO(utcString);
+
+	// UTCからJSTに9時間を加算
+	const jstDate = fns.addHours(date, 9);
+
+	// JSTの時分秒をフォーマット
+	const jstTime = fns.format(jstDate, 'HH:mm:ss');
+
+	return jstTime;
+}
 
 // DataTable コンポーネント
 function DataTable() {
 	type APIData = {
-		id: number;
-		name: string;
-		email: string;
+		student_ID:string;
+		isInRoom:number;
+		updated_at:string;
 	};
+
+	const comvTF = [true,false];
 
 	// 状態管理
 	const [data, setData] = useState<APIData[]>([]);
 	const [isVisible, setIsVisible] = useState(false);
 
-
-
 	// データ取得関数
 	const getData = async () => {
-		try {
-			const response = await fetch('/api/data');
+		try {			
+			const response = await fetch(`/api/log/fetch`);
+
 			if (!response.ok) throw new Error('データの取得に失敗しました');
 			const jsonData: APIData[] = await response.json();
 			setData(jsonData);
@@ -30,18 +48,18 @@ function DataTable() {
 	};
 
 	// 削除関数
-	const deleteRecord = async (id: number) => {
+	const deleteRecord = async (student_ID:string) => {
 		try {
 			const response = await fetch('/api/delete', {
 				method: 'DELETE',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ id }),
+				body: JSON.stringify({ student_ID }),
 			});
 			if (response.ok) {
 				// 削除成功後、データを再取得して更新
-				const updatedData = data.filter(item => item.id !== id);
+				const updatedData = data.filter(item => item.student_ID !== student_ID);
 				setData(updatedData);
 				alert('データが削除されました');
 			} else {
@@ -52,28 +70,42 @@ function DataTable() {
 			alert('削除に失敗しました');
 		}
 	};
+	
+	useEffect(() => {
+		// 2秒ごとにgetDataを実行
+		const intervalId = setInterval(getData, 300);
+
+		// クリーンアップ処理: コンポーネントがアンマウントされる時にintervalをクリア
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, []);  // 空の依存配列: 初回マウント時にのみ実行
 
 	return (
 		<>
-			<button onClick={getData}>データ取得</button>
+			<button>データ取得</button>
 			{isVisible && (
 				<table>
 					<thead>
 						<tr>
-							<th>ID</th>
-							<th>名前</th>
-							<th colSpan={2}>Email</th>
+							<th>学籍番号</th>
+							<th>在室状況</th>
+							<th>最終更新時</th>
 						</tr>
 					</thead>
 					<tbody>
 						{data.map((item) => (
-							<tr key={item.id}>
-								<td>{item.id}</td>
-								<td>{item.name}</td>
-								<td>{item.email}</td>
-								<td style={{
+							<tr key={item.student_ID}>
+								<td>{item.student_ID}</td>
+								<td>
+									<Badge 
+									isTrue={comvTF[item.isInRoom]} 
+									text={{true:"居るよ",false:"居ないよ"}}/>
+								</td>
+								<td>{formatTime(item.updated_at)}</td>
+								{/* <td style={{
 									padding:"0 10px"
-								}}><DeleteTooltip onDelete={() => deleteRecord(item.id)} /></td>
+								}}><DeleteTooltip onDelete={() => deleteRecord(item.id)} /></td> */}
 							</tr>
 						))}
 					</tbody>

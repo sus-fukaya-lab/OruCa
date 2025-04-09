@@ -1,28 +1,46 @@
 import nfc
+from nfc.tag import Tag
+from nfc.tag.tt3 import BlockCode,ServiceCode
+from typing import cast
 import requests
-import logging
-from datetime import datetime
 
-SYSTEM_CODE = 0x809e
-API_URL = "http://localhost:3000/log"  # APIサーバーのURL（例）
+SYSTEM_CODE = 0xFE00 # FeliCaのサービスコード
+API_URL = "http://api:3000/log"  # APIサーバーのURL
 
-def on_connect(tag):
+def get_student_ID(tag:Tag):
+        sc = ServiceCode(106,0b001011)
+        bc = BlockCode(0)
+        student_id_bytearray = cast(bytearray, tag.read_without_encryption([sc], [bc]))
+        role_classification = student_id_bytearray.decode("utf-8")[0:2]
+        match role_classification:
+            case "01" | "02":  # student
+                return student_id_bytearray.decode("utf-8")[2:9]
+            # case "11":  # faculty
+            #     student_id = f"Type:Faculity , Number:{student_id_bytearray.decode("utf-8")[2:8]}"
+            case _:  # unknown
+                raise f"Unknown role classification: {role_classification}"
+
+
+def on_connect(tag:Tag):
     print("connected")
     if isinstance(tag, nfc.tag.tt3_sony.FelicaStandard) and SYSTEM_CODE in tag.request_system_code():
-        tag.idm, tag.pmm, *_ = tag.polling(0xffff)
-        # 現在の日時をISO 8601形式で取得
-        current_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        
-        # APIにPOSTリクエストを送信
-        response = requests.post(API_URL+"/write", json={
-            'idm': tag.idm.hex(),
-            'pmm': tag.pmm.hex(),
-            'timestamp': current_time  # ここは実際の時間を使ってください
-        },timeout=5000)
-        if response.status_code == 200:
-            print("Log saved successfully")
-        else:
-            print(f"Failed to save log: {response.status_code}")
+        tag.idm, tag.pmm, *_ = tag.polling(SYSTEM_CODE)
+        try:
+            student_ID = get_student_ID(tag)
+            try:            
+                # APIにPOSTリクエストを送信
+                response = requests.post(API_URL+"/write", json={
+                    "student_ID":student_ID,
+                },timeout=5000)
+                if response.status_code == 200:
+                    print("Log saved successfully")
+                else:
+                    print(f"Failed to save log: {response.status_code}")
+            except Exception as e:
+                print(e)
+        except Exception as e:
+            print(e)
+            pass
     return True
 
 def on_release(tag):

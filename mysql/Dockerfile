@@ -1,5 +1,5 @@
 # MySQLの公式イメージを使用
-FROM mysql:latest
+FROM mysql:8.4
 
 # 環境変数を設定
 ENV MYSQL_ROOT_PASSWORD=root_password

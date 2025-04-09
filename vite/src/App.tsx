@@ -6,9 +6,9 @@ function App() {
   return (
     <>
       <div style={{overflowY:"auto"}}>
-        <h1>ユーザーデータ</h1>
+        <h1>FeliCa読み取り記録</h1>
         <DataTable/>
-        <DataForm/>
+        {/* <DataForm/> */}
       </div>
     </>
   );

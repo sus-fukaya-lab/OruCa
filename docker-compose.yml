@@ -67,6 +67,7 @@ services:
 
   nfc:
     image: python:3.13-alpine
+    container_name: ORuCa_nfc
     build:
       context: nfc  # Dockerfileが存在するディレクトリ
     working_dir: /app
@@ -77,8 +78,14 @@ services:
     environment:
       - TZ=Asia/Tokyo  # 必要に応じて環境変数の追加
     command: ["python","main.py"]
+    depends_on:
+      mysql:
+        condition: service_healthy
     devices:
       - "/dev/bus/usb:/dev/bus/usb"  # USBデバイスをコンテナに渡す
+    networks:
+      - backend
+
 
 networks:
   backend:

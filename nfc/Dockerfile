@@ -7,7 +7,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 	PYTHONUNBUFFERED=1 \
 	LANG=C.UTF-8 \
 	TZ=Asia/Tokyo
-
 # 必要に応じて pip のバージョンを更新
 RUN pip install --upgrade pip
 
