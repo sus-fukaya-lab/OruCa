@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import './DataTable.css';
 import * as fns from 'date-fns';
 import Badge from '@components/Badge';
-
-const API_URL = '/socket';
+import { useWebSocket } from '@Apps/contexts/WebSocketContext';
 
 function formatTime(utcString: string) {
 	// ISO 8601形式の文字列をDateオブジェクトに変換
@@ -26,21 +25,20 @@ function DataTable() {
 	// 状態管理
 	const [data, setData] = useState<APIData[]>([]);
 	const [isVisible, setIsVisible] = useState(false);
+	const { socket, sendMessage } = useWebSocket();
 
 	// WebSocketの初期化
 	useEffect(() => {
-		const socket = new WebSocket(API_URL);  // サーバーのWebSocket URL
-
-		socket.onmessage = (event) => {
-			const newData: APIData[] = JSON.parse(event.data);
-			setData(newData);
-			setIsVisible(newData.length > 0); // テーブル表示
-		};
-
-		// クリーンアップ処理: コンポーネントがアンマウントされる時にWebSocketを閉じる
-		return () => {
-			socket.close();
-		};
+		if(socket){
+			socket.onmessage = (event) => {
+				const newData: APIData[] = JSON.parse(event.data);
+				setData(newData);
+				setIsVisible(newData.length > 0); // テーブル表示
+			};
+			// クリーンアップ処理: コンポーネントがアンマウントされる時にWebSocketを閉じる
+		}else{
+			return ;
+		}
 	}, []);
 
 	return (

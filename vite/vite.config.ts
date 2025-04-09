@@ -9,7 +9,8 @@ export default defineConfig({
       '@Apps': path.resolve(__dirname, 'src/App'),
       '@pages': path.resolve(__dirname, 'src/App/pages'),
       '@components': path.resolve(__dirname, 'src/App/components'),
-      '@snippets': path.resolve(__dirname, "src/snippets/components/ui")
+      '@snippets': path.resolve(__dirname, "src/snippets/components/ui"),
+      '@contexts': path.resolve(__dirname, "src/App/contexts"),
     }
   },
   plugins: [react()],

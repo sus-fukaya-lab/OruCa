@@ -35,6 +35,9 @@
       ],
       "@snippets/*":[
         "src/snippets/components/ui/*"
+      ],
+      "@contexts/*":[
+        "src/App/contexts/*"
       ]
     }
   },
