@@ -1,7 +1,7 @@
 table {
 	width: 700px;
 	height: fit-content;
-	margin: 20px auto;
+	margin: 0 auto;
 	border-collapse: collapse;
 	border-radius: 12px;
 	overflow: hidden;

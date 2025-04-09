@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import './DataTable.css';
-import DeleteTooltip from '../DeleteToolTip/DeleteToolTip';  // Tooltipコンポーネントをインポート
 import * as fns from 'date-fns';
-import Badge from '../Badge/Badge';
+import Badge from '@components/Badge';
 
 const API_URL = '/socket';
 
@@ -63,7 +62,7 @@ function DataTable() {
 								<td>
 									<Badge
 										isTrue={comvTF[item.isInRoom]}
-										text={{ true: '居るよ', false: '居ないよ' }}
+										text={{ true: '在室', false: '不在' }}
 									/>
 								</td>
 								<td>{formatTime(item.updated_at)}</td>

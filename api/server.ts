@@ -36,9 +36,8 @@ const wss = new WebSocket.Server({ server });
 // WebSocket接続の処理
 const handleWebSocketConnection = (ws: WebSocket) => {
 	console.log('クライアントが接続しました');
-
 	// 初期データ送信
-	db.query('SELECT * FROM logs', (err, results) => {
+	db.query('SELECT * FROM logs;', (err, results) => {
 		if (err) {
 			console.error('データ取得エラー:', err);
 			return;
@@ -61,7 +60,7 @@ wss.on('connection', handleWebSocketConnection);
 
 // データ更新のブロードキャスト
 const broadcastData = () => {
-	db.query('SELECT * FROM logs', (err, results) => {
+	db.query('SELECT * FROM logs;', (err, results) => {
 		if (err) {
 			console.error('データ取得エラー:', err);
 			return;
