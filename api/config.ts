@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import WebSocket from 'ws';
+import mysql from "mysql2";
 dotenv.config();
 
 // 型安全な取得関数
@@ -35,14 +36,13 @@ export const DB_CONFIG:IDBConfig = {
 	database: getEnv("MYSQL_DATABASE"),
 }
 
-export type WsProcessType = "log/fetch" | "log/write" | "user/auth" | "user/update_name";
-export type WsPayLoad = {
-	"log/fetch":{student_ID:string,},
-	"log/write":{},
-	"user/auth": { student_ID: string, password: string },
-	"user/update_name":{}
+export type TWsProcessType = "log/fetch" | "log/write" | "user/auth" | "user/update_name";
+export type TWsPayLoad = {
+	result:boolean,
+	content: undefined | mysql.QueryResult,
+	message:string,
 }
-export type WsMessage = {
-	type:WsProcessType,
-	payload:WsPayLoad[WsProcessType]
+export type TWsMessage = {
+	type:TWsProcessType,
+	payload:TWsPayLoad
 }

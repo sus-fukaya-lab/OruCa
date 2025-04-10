@@ -6,7 +6,7 @@ export type APIData = {
 };
 
 
-export type WsProcessType = "log/fetch" | "user/auth" | "user/update_name";
+export type WsProcessType = "log/fetch"| "log/write" | "user/auth" | "user/update_name";
 export type WsPayLoad = {
 	"log/fetch": APIData[],
 	"user/auth": { result:boolean},
