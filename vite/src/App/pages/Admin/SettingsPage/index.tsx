@@ -2,7 +2,6 @@
 import CrossButton from "@components/CrossButton";
 import HeadBar from "@components/HeadBar/HeadBar";
 import { Box, Heading, Text, Button } from "@chakra-ui/react";
-import { auth } from "@Apps/utils/auth";
 import { useNavigate } from "react-router-dom";
 
 
@@ -10,7 +9,6 @@ function SettingsPage(){
 	const navigate = useNavigate();
 
 	const handleLogout = () => {
-		auth.logout();
 		navigate("/admin");
 	};
 	return (

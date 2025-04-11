@@ -1,5 +1,5 @@
-import { TWsMessage } from "../config";
-import mysql from "mysql2";
+import { TWsMessage, TWsProcessType } from "../config";
+import mysql from "mysql2/promise";  // mysql2/promiseをインポート
 import { createHash } from "crypto";
 import WebSocket from "ws";
 import { hasProps, sendWsMessage } from '../utils';
@@ -9,96 +9,179 @@ type HandlerFunction = (ws: WebSocket.WebSocket, data: TWsMessage) => void;
 
 export class MessageHandler {
 	private wss: WebSocket.Server;
-	private db: mysql.Connection;
+	private connectionPool: mysql.PoolConnection;  // mysql.Pool型に変更
 
-	constructor(wss: WebSocket.Server, db: mysql.Connection) {
+	constructor(wss: WebSocket.Server, connection:mysql.PoolConnection) {
 		this.wss = wss;
-		this.db = db;
+		this.connectionPool = connection;  // プールを作成
 	}
 
-	public fetchAndSendLogs(callback: (results: mysql.QueryResult) => void) {
-		// データをクライアントに送信
-		this.db.query("SELECT * FROM student_log_view;", (err, results) => {
-			if (err) {
-				console.error("データ取得エラー:", err);
-				return;
-			}
-			callback(results);
-		});
+	// 非同期でログを取得し、クライアントに送信
+	public async fetchLogs() {
+		try {
+			const [results] = await this.connectionPool.execute("SELECT * FROM student_log_view;");
+			return results;
+		} catch (err) {
+			console.error("データ取得エラー:", err);
+		}
 	}
 
-	public fetchToken(student_ID: string, callback: (results: mysql.QueryResult) => void) {
-		this.db.execute("CALL get_student_token(?);", [student_ID], (err, results) => {
-			if (err) {
-				console.error("データ取得エラー:", err);
-				return;
+	// トークンを取得する非同期メソッド
+	public async fetchToken(student_ID: string) {
+		try {
+			const [results] = await this.connectionPool.execute("CALL get_student_token(?);", [student_ID]);
+			console.log(results);
+			
+			if (!results || 
+				!hasProps<{ student_token: string }>(results,["student_token"])
+			) {
+				return undefined;
 			}
-			callback(results);
-		});
+			return results;
+		} catch (err) {
+			console.error("データ取得エラー:", err);
+		}
 	}
 
 	// データ更新のブロードキャスト
-	public broadcastData() {
-		this.fetchAndSendLogs((r) => {
-			// 全クライアントに更新データを送信
+	public async broadcastData() {
+		try {
+			const logs = await this.fetchLogs();  // 非同期でログを取得
 			this.wss.clients.forEach((client) => {
 				if (client.readyState === WebSocket.OPEN) {
 					const jsonMsg: TWsMessage = {
 						type: "log/fetch",
 						payload: {
 							result: true,
-							content: r,
+							content: logs,
 							message: "在室データ",
 						},
 					};
-					sendWsMessage(client,jsonMsg);
+					sendWsMessage(client, jsonMsg);
 				}
 			});
-		});
+		} catch (err) {
+			console.error("データのブロードキャストエラー:", err);
+		}
 	}
 
 	// 各メッセージの処理
-	public handlers: Record<string, HandlerFunction> = {
-		"log/fetch": (ws, data) => {
-			this.fetchAndSendLogs((r) => {
+	public handlers: Record<TWsProcessType, HandlerFunction> = {
+		"ack":async (ws,data)=>{
+			try {
+				const logs = await this.fetchLogs();  // 非同期でログを取得
+				const jsonMsg: TWsMessage = {
+					type: "ack",
+					payload: {
+						result: true,
+						content: {},
+						message: "在室データ",
+					},
+				};
+				sendWsMessage(ws, jsonMsg);
+			} catch (error) {
+				console.error("ログ取得エラー:", error);
+			}
+		},
+		"log/fetch": async (ws, data) => {
+			try {
+				const logs = await this.fetchLogs();  // 非同期でログを取得
 				const jsonMsg: TWsMessage = {
 					type: "log/fetch",
 					payload: {
 						result: true,
-						content: r,
+						content: logs,
 						message: "在室データ",
 					},
 				};
-				sendWsMessage(ws,jsonMsg);
-			});
+				sendWsMessage(ws, jsonMsg);
+			} catch (error) {
+				console.error("ログ取得エラー:", error);
+			}
 		},
 
-		"log/write": (ws, data) => {
+		"log/write": async (ws, data) => {
 			const content = data.payload?.content;
 			if (!hasProps<{ student_ID: string }>(content, ["student_ID"])) return;
 
-			this.db.execute(`CALL insert_or_update_log(?);`, [content.student_ID], (err, result: mysql.ResultSetHeader) => {
+			try {
+				await this.connectionPool.execute("CALL insert_or_update_log(?);", [content.student_ID]);
+				console.log(content.student_ID);
 				const jsonMsg: TWsMessage = {
-					type: "log/fetch",
+					type: "log/write",
 					payload: {
-						result: !err,
+						result: true,
 						content: undefined,
-						message: err ? `データ挿入エラー:${err}` : `データが挿入されました:${result.insertId}`,
+						message: `データが挿入されました`,
 					},
 				};
-				sendWsMessage(ws,jsonMsg)
-				if (!err) this.broadcastData();
-			});
+				sendWsMessage(ws, jsonMsg);
+				this.broadcastData();  // 更新データを全クライアントに送信
+			} catch (err) {
+				const jsonMsg: TWsMessage = {
+					type: "log/write",
+					payload: {
+						result: false,
+						content: undefined,
+						message: `データ挿入エラー:${err}`,
+					},
+				};
+				sendWsMessage(ws, jsonMsg);
+			}
 		},
+		"user/fetchToken": async (ws,data)=>{
+			const content = data.payload?.content;
+			const jsonMsg: TWsMessage = {
+				type: "user/fetchToken",
+				payload: {
+					result: false,
+					content: undefined,
+					message: "不明なエラー",
+				},
+			};
+			try {
+				if (!hasProps<{ student_ID: string }>(content, ["student_ID"])){
+					jsonMsg.payload = {
+						result:false,
+						content:undefined,
+						message:"student_IDがありません"
+					}
+					sendWsMessage(ws, jsonMsg);
+					return;
+				};
 
-		"user/auth": (ws, data) => {
+				const result = await this.fetchToken(content.student_ID);
+				console.log(result);
+				
+				if (!hasProps<{ student_token: string }>(result, ["student_token"])){
+					jsonMsg.payload = {
+						result: false,
+						content: undefined,
+						message: "student_tokenがありません"
+					}
+					sendWsMessage(ws, jsonMsg);
+					return;
+				};
+
+				jsonMsg.payload = {
+					result: true,
+					content: result,
+					message: "認証トークンのfetch"
+				}
+				sendWsMessage(ws,jsonMsg);
+			} catch (err) {
+				console.error("トークンフェッチエラー:", err);
+			}
+		},
+		"user/auth": async (ws, data) => {
 			const content = data.payload?.content;
 			if (!hasProps<{ student_ID: string; password: string }>(content, ["student_ID", "password"])) return;
 
-			this.fetchToken(content.student_ID, (r) => {
+			try {
+				const r = await this.fetchToken(content.student_ID);
 				if (!hasProps<{ token: string }>(r, ["token"])) return;
 
-				const { token } = r as unknown as { token: string };
+				const { token } = r ;
 
 				const generateSHA256Hash = (input: string): string => {
 					const hash = createHash("sha256");
@@ -113,11 +196,16 @@ export class MessageHandler {
 					payload: {
 						result: token === expectedToken,
 						content: undefined,
-						message: token === expectedToken ? "認証成功" : "認証エラー"
+						message: token === expectedToken ? "認証成功" : "認証エラー",
 					},
 				};
-				sendWsMessage(ws,jsonMsg)
-			});
+				sendWsMessage(ws, jsonMsg);
+			} catch (err) {
+				console.error("認証エラー:", err);
+			}
 		},
+		"user/update_name":async (ws,data)=>{
+
+		}
 	};
 }

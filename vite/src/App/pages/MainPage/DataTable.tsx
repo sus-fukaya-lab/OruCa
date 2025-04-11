@@ -3,7 +3,7 @@ import { Table, Box, Text } from '@chakra-ui/react';
 import * as dateFns from "date-fns";
 import { useWebSocket } from '@Apps/contexts/WebSocketContext';
 import Badge from '@components/Badge'; // 既存のBadgeコンポーネントを使用
-import { APIData, WsMessage, WsPayLoad } from '@Apps/app.env';
+import { APIData, TWsMessage} from '@Apps/app.env';
 
 function formatTime(isoString: string) {
 	const date = dateFns.parseISO(isoString);
@@ -24,9 +24,9 @@ function DataTable() {
 	useMemo(() => {
 		if (socket) {
 			socket.onmessage = (event) => {
-				const d:WsMessage = JSON.parse(event.data);
+				const d:TWsMessage = JSON.parse(event.data);
 				if(d.type === "log/fetch"){
-					const newData: APIData[] = d.payload as WsPayLoad["log/fetch"];
+					const newData: APIData[] = d.payload.content;
 					setData(newData);
 					setIsVisible(newData.length > 0);
 				}
@@ -72,7 +72,9 @@ function DataTable() {
 							{data.map((item) => (
 								<Table.Row key={item.student_ID} _hover={{ bg: 'gray.100' }}>
 									<Table.Cell {...tdStyles}>{item.student_ID}</Table.Cell>
-									<Table.Cell {...tdStyles}>なまえ</Table.Cell>
+									<Table.Cell {...tdStyles}>
+										{item.student_Name?item.student_Name:"未登録"}
+									</Table.Cell>
 									<Table.Cell textAlign={"center"}>
 										<Badge isTrue={comvTF[item.isInRoom]} text={{ true: '在室', false: '不在' }} />
 									</Table.Cell>

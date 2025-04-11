@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-import WebSocket from 'ws';
 import mysql from "mysql2";
 dotenv.config();
 
@@ -17,11 +16,14 @@ interface IServerConfig{
 	host :string;
 }
 
-interface IDBConfig {
+interface IDBConfig extends mysql.PoolOptions {
 	host:string;
 	user:string;
 	password:string;
 	database:string;
+	waitForConnections: boolean,
+	connectionLimit: number,
+	queueLimit: number,
 }
 
 export const SERVER_CONFIG:IServerConfig = {
@@ -34,9 +36,12 @@ export const DB_CONFIG:IDBConfig = {
 	user: getEnv("MYSQL_USER"),
 	password: getEnv("MYSQL_PASSWORD"),
 	database: getEnv("MYSQL_DATABASE"),
+	waitForConnections:true,
+	connectionLimit:3,
+	queueLimit:0
 }
 
-export type TWsProcessType = "log/fetch" | "log/write" | "user/auth" | "user/update_name";
+export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken";
 export type TWsPayLoad = {
 	result:boolean,
 	content: undefined | mysql.QueryResult,

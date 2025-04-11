@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "tsc -b && node ./server.js"
+    "start": "ts-node-dev --respawn server.ts"
   },
   "dependencies": {
+    "@types/dotenv": "^8.2.3",
     "@types/ws": "^8.18.1",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "mysql2": "^3.13.0",
     "ws": "^8.18.1"
@@ -16,7 +18,7 @@
     "@types/express": "^5.0.0",
     "@types/mysql2": "types/mysql2",
     "@types/node": "^22.13.10",
-    "cors": "^2.8.5",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "ts-node-dev": "^2.0.0"
   }
 }

@@ -6,14 +6,13 @@ export type APIData = {
 };
 
 
-export type WsProcessType = "log/fetch"| "log/write" | "user/auth" | "user/update_name";
-export type WsPayLoad = {
-	"log/fetch": APIData[],
-	"user/auth": { result:boolean},
-	"user/update_name": {result:boolean}
+export type TWsProcessType = "log/fetch" | "log/write" | "user/auth" | "user/update_name";
+export type TWsPayLoad = {
+	result: boolean,
+	content: undefined | mysql.QueryResult,
+	message: string,
 }
-export type WsMessage = {
-	type: WsProcessType,
-	payload: WsPayLoad[WsProcessType]
+export type TWsMessage = {
+	type: TWsProcessType,
+	payload: TWsPayLoad
 }
-

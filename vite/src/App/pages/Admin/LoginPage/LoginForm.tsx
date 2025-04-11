@@ -4,7 +4,7 @@ import { Toaster, toaster } from "@snippets/toaster";
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWebSocket } from '@contexts/WebSocketContext';
-import { WsMessage, WsPayLoad } from "@Apps/app.env";
+import { TWsMessage} from "@Apps/app.env";
 
 export const LoginForm = () => {
 	const [username, setUsername] = useState("");
@@ -15,9 +15,9 @@ export const LoginForm = () => {
 	useMemo(() => {
 		if (socket && socket.readyState === WebSocket.OPEN) {
 			socket.onmessage = (event) => {
-				const d: WsMessage = JSON.parse(event.data);
+				const d: TWsMessage = JSON.parse(event.data);
 				if (d.type === "user/auth") {
-					const {result} = d.payload as WsPayLoad["user/auth"];
+					const {result} = d.payload.content as {result:boolean};
 					setSuccess(result);
 				}
 			};

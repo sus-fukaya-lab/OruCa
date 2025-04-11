@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # コンテナ起動時のコマンド
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
