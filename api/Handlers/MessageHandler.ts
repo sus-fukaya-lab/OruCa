@@ -68,19 +68,22 @@ export class MessageHandler {
 	// 各メッセージの処理
 	public handlers: Record<TWsProcessType, HandlerFunction> = {
 		"ack":async (ws,data)=>{
+			const jsonMsg: TWsMessage = {
+				type: "ack",
+				payload: {
+					result: false,
+					content: { status: false },
+					message: "通信ステータス",
+				},
+			};
 			try {
-				const logs = await this.fetchLogs();  // 非同期でログを取得
-				const jsonMsg: TWsMessage = {
-					type: "ack",
-					payload: {
-						result: true,
-						content: {},
-						message: "在室データ",
-					},
-				};
+				jsonMsg.payload.result = true;
+				jsonMsg.payload.content = {status:true};
 				sendWsMessage(ws, jsonMsg);
 			} catch (error) {
-				console.error("ログ取得エラー:", error);
+				jsonMsg.payload.result = false;
+				jsonMsg.payload.content = { status: false };
+				sendWsMessage(ws,jsonMsg)
 			}
 		},
 		"log/fetch": async (ws, data) => {

@@ -44,7 +44,7 @@ export const DB_CONFIG:IDBConfig = {
 export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken";
 export type TWsPayLoad = {
 	result:boolean,
-	content: undefined | mysql.QueryResult,
+	content: undefined | Record<string,any>,
 	message:string,
 }
 export type TWsMessage = {
