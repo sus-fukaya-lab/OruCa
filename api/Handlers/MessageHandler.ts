@@ -1,5 +1,6 @@
 import { TWsMessage, TWsProcessType } from "../config";
-import mysql from "mysql2/promise";  // mysql2/promiseをインポート
+import mysql from "mysql2/promise";
+import express from "express";
 import { createHash } from "crypto";
 import WebSocket from "ws";
 import { hasProps, sendWsMessage } from '../utils';
@@ -9,9 +10,11 @@ type HandlerFunction = (ws: WebSocket.WebSocket, data: TWsMessage) => void;
 
 export class MessageHandler {
 	private wss: WebSocket.Server;
-	private connectionPool: mysql.PoolConnection;  // mysql.Pool型に変更
-
-	constructor(wss: WebSocket.Server, connection:mysql.PoolConnection) {
+	private connectionPool: mysql.PoolConnection;
+	private expressServer : express.Express;
+	
+	constructor(es:express.Express,wss: WebSocket.Server, connection:mysql.PoolConnection) {
+		this.expressServer = es;
 		this.wss = wss;
 		this.connectionPool = connection;  // プールを作成
 	}
@@ -109,7 +112,6 @@ export class MessageHandler {
 
 			try {
 				await this.connectionPool.execute("CALL insert_or_update_log(?);", [content.student_ID]);
-				console.log(content.student_ID);
 				const jsonMsg: TWsMessage = {
 					type: "log/write",
 					payload: {

@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer } from "http";
 import { SERVER_CONFIG, DB_CONFIG } from "./config";
 import { DatabaseHandler } from "./Handlers/DataBaseHandler"; // DatabaseHandlerクラスのインポート
 import { WebSocketServerHandler } from "./Handlers/WebSocketServerHandler"; // WebSocketServerHandlerクラスのインポート
@@ -21,19 +20,17 @@ const initializeDatabase = async () => {
 	}
 };
 
-// Expressサーバー作成
-const server = createServer(app);
-
 // WebSocketサーバーの作成
 const initializeWebSocket = async() => {
 	const connection = await databaseHandler.getConnection();
-	new WebSocketServerHandler(server,connection); // WebSocketサーバーを初期化
+	const wssh = new WebSocketServerHandler(app,connection);
+	return wssh.getServer();
 };
 
 // サーバーを立ち上げる
 const startServer = async () => {
 	await initializeDatabase(); // DB接続を先に行う
-	initializeWebSocket();  // WebSocketサーバーを初期化
+	const server = await initializeWebSocket();  // WebSocketサーバーを初期化
 
 	server.listen(port, host, () => {
 		console.log(`APIサーバーは http://${host}:${port} で実行中`);

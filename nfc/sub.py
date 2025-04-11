@@ -5,9 +5,11 @@ from typing import cast
 import websockets
 import json
 import asyncio
+import concurrent.futures
+
 
 SYSTEM_CODE = 0xFE00  # FeliCaのサービスコード
-WS_URL = "ws://api:3000"  # WebSocketサーバーのURL
+URL = "ws://api:3000"  # WebSocketサーバーのURL
 
 # WebSocketメッセージ送信関数を非同期関数に変更
 async def update_log(student_ID: str, websocket):
@@ -22,7 +24,7 @@ async def update_log(student_ID: str, websocket):
     try:
         # send_dataをJSON形式にシリアライズして送信
         await websocket.send(json.dumps(send_data))
-        response = await websocket.recv()
+        # response = await websocket.recv()
         print(f"Server says: {response}")
     except Exception as e:
         print(f"Error sending log: {e}")
@@ -38,39 +40,40 @@ def get_student_ID(tag: Tag):
         case _:  # unknown
             raise Exception(f"Unknown role classification: {role_classification}")
 
-def on_connect_wrapper(websocket):
-    def callback(tag: Tag):
-        print("connected")
-        if isinstance(tag, nfc.tag.tt3_sony.FelicaStandard) and SYSTEM_CODE in tag.request_system_code():
-            tag.idm, tag.pmm, *_ = tag.polling(SYSTEM_CODE)
+# グローバルイベントループの参照を保持
+loop = asyncio.get_event_loop()
 
+def on_connect(tag: Tag, websocket):
+    print("connected")
+    if isinstance(tag, nfc.tag.tt3_sony.FelicaStandard) and SYSTEM_CODE in tag.request_system_code():
+        tag.idm, tag.pmm, *_ = tag.polling(SYSTEM_CODE)
+        try:
+            student_ID = get_student_ID(tag)
+            # メインイベントループに非同期タスクをスレッドセーフに送信
+            future = asyncio.run_coroutine_threadsafe(update_log(student_ID, websocket), loop)
+            # （オプション）ログなどが必要な場合
             try:
-                student_ID = get_student_ID(tag)
-                # 非同期関数を asyncio イベントループ上で実行
-                asyncio.create_task(update_log(student_ID, websocket))
-            except Exception as e:
-                print(f"Error: {e}")
-        return True
+                future.result(timeout=3)  # 結果待ちするなら
+            except concurrent.futures.TimeoutError:
+                print("WebSocket log timeout")
+        except Exception as e:
+            print(f"Error: {e}")
+    return True
 
-    return callback
-    
 def on_release(tag):
     print("released")
     return True
-
-async def connect_nfc(websocket):
-    on_connect = on_connect_wrapper(websocket)
-    with nfc.ContactlessFrontend("usb") as clf: # 通常のwith構文で
-        while True:
-            # 非同期タスクとして on_connect を呼び出す
-            clf.connect(rdwr={"on-connect":on_connect, "on-release": on_release})
     
 async def main():
-    # WebSocket接続
-    async with websockets.connect(WS_URL) as websocket:
-        print("WebSocket connected")
-        # NFCリーダー接続と待機
-        await connect_nfc(websocket)
+    # NFCリーダー接続と待機
+    with nfc.ContactlessFrontend("usb") as clf: # 通常のwith構文で
+        # WebSocket接続
+        async with websockets.connect(WS_URL) as websocket:
+            print("WebSocket connected")
+            while True:
+                # 非同期タスクとして on_connect を呼び出す
+                clf.connect(rdwr={"on-connect":lambda tag : on_connect(tag,websocket), "on-release": on_release})
+
 
 # メインの非同期処理実行
 asyncio.run(main())
