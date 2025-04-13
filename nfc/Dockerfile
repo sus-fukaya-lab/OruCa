@@ -1,12 +1,16 @@
 FROM python:3.13-alpine
+
 # 必要なライブラリ（libusb）をインストール
-RUN apk update && apk add --no-cache libusb-dev
+
+# 基本的な依存関係のインストール
+RUN apk add libusb
 
 # 環境変数の設定（UTF-8対応）
 ENV PYTHONDONTWRITEBYTECODE=1 \
 	PYTHONUNBUFFERED=1 \
 	LANG=C.UTF-8 \
 	TZ=Asia/Tokyo
+
 # 必要に応じて pip のバージョンを更新
 RUN pip install --upgrade pip
 

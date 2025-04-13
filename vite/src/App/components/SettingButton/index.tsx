@@ -15,7 +15,8 @@ const SettingButton:React.FC<TSettingButton> = ({address})=>{
 	return (
 		<IconButton
 			aria-label="Open Settings Page"
-			backgroundColor={"blue.900"}
+			backgroundColor={"default"}
+			shadow={"md"}
 			transition="transform 0.6s ease-in-out"
 			_hover={{
 				transform: 'rotate(180deg)',

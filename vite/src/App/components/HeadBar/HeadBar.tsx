@@ -1,6 +1,7 @@
 import React from "react";
 import {Heading, HStack, Icon, VStack ,Box,Text} from "@chakra-ui/react";
 import { FaAnchor } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 type THeadBar = {
 	otherElements?: React.ReactNode[]
@@ -8,11 +9,16 @@ type THeadBar = {
 };
 
 const HeadBar: React.FC<THeadBar> = ({ otherElements, children }) => {
+	const navigate = useNavigate();
+	const navigateMainPage = ()=>{
+		navigate("/");
+	}
 	return (
 		<VStack
 			w={"100vw"}
 			h={"100vh"}
 			gap={0}
+			color={"default"}
 		>
 			<HStack
 				w={"100%"}
@@ -22,7 +28,7 @@ const HeadBar: React.FC<THeadBar> = ({ otherElements, children }) => {
 				borderBottomWidth={1}
 				shadow={"xs"}
 			>
-				<VStack gap={0}>
+				<VStack gap={0} onClick={navigateMainPage} cursor={"pointer"}>
 					<HStack
 						w={"100%"}
 						gap={2}
@@ -39,13 +45,15 @@ const HeadBar: React.FC<THeadBar> = ({ otherElements, children }) => {
 							pb={1}
 						>OruCa</Heading>
 					</HStack>
-					<Text fontFamily={"monospace"} fontSize={"sm"} fontWeight={"semibold"}>FeliCa 在室管理システム</Text>
+					<Text fontFamily={"monospace"} fontSize={"md"} fontWeight={"semibold"}>FeliCa 在室管理システム</Text>
 				</VStack>
-				{otherElements?.map((e,index) => (
-					<React.Fragment key={`HeadBarOtherElements-${index}`}>
-						{e}
-					</React.Fragment>
-				))}
+				<HStack gap={4} justify={"center"}>
+					{otherElements?.map((e, index) => (
+						<React.Fragment key={`HeadBarOtherElements-${index}`}>
+							{e}
+						</React.Fragment>
+					))}
+				</HStack>
 			</HStack>
 			<Box w={"100%"} h={"100%"}>
 				{children}

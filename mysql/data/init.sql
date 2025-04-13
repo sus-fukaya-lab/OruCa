@@ -1,7 +1,5 @@
 USE OruCa_DB;
 
-SET @admin_page_pass = "${ADMIN_PAGE_PATH}";
-
 CREATE TABLE logs (
     student_ID VARCHAR(16) NOT NULL PRIMARY KEY,
     isInRoom BOOLEAN NOT NULL DEFAULT TRUE,
@@ -24,21 +22,32 @@ SELECT l.student_ID, u.student_Name, l.isInRoom, l.updated_at
 FROM logs l
     JOIN users u ON l.student_ID = u.student_ID;
 
+CREATE VIEW student_name_view AS
+SELECT l.student_ID, u.student_Name
+FROM logs l
+    JOIN users u ON l.student_ID = u.student_ID;
+
 DELIMITER $$
 
 CREATE PROCEDURE insert_or_update_log(IN stuID VARCHAR(16))
 BEGIN
-    DECLARE admin_pass VARCHAR(32) DEFAULT @admin_page_pass;
+    DECLARE admin_pass VARCHAR(32);
     DECLARE student_salt VARCHAR(64);
     DECLARE student_token VARCHAR(64);
+    
+    SET admin_pass = 'fukaya_lab_OruCa';
 
+    select admin_pass;
+    
     -- ランダムなsaltの生成（例としてUUIDを使用）
     SET student_salt = SHA2(stuID,256);
+
+    select student_salt;
 
     -- ハッシュ生成 (saltとpasswordを結合してハッシュ化)
     SET student_token = SHA2(CONCAT(stuID, admin_pass, student_salt), 256);
 
-    SELECT student_token;
+    select student_token;
 
     -- logsテーブルへのINSERT/UPDATE
     INSERT INTO logs (student_ID, isInRoom) 
@@ -51,7 +60,7 @@ BEGIN
     
     IF NOT EXISTS (SELECT 1 FROM users WHERE student_ID = stuID) THEN
         INSERT INTO users (student_ID,student_Name, student_token)
-        VALUES (stuID,NULL,"aiueo");
+        VALUES (stuID,NULL,student_token);
     END IF;
 END$$
 

@@ -16,6 +16,7 @@ const CrossButton:React.FC<TSettingButton> = ({address})=>{
 		<IconButton
 			aria-label="Open Settings Page"
 			backgroundColor={"red"}
+			shadow={"md"}
 			transition="transform 0.6s ease-in-out"
 			_hover={{
 				transform: 'rotate(180deg)',

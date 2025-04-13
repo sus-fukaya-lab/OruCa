@@ -5,11 +5,10 @@ export type APIData = {
 	updated_at: string;
 };
 
-
-export type TWsProcessType = "log/fetch" | "log/write" | "user/auth" | "user/update_name";
+export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken";
 export type TWsPayLoad = {
 	result: boolean,
-	content: undefined | mysql.QueryResult,
+	content: undefined | Record<string, any>[],
 	message: string,
 }
 export type TWsMessage = {

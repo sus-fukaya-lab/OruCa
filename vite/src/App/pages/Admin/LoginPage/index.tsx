@@ -3,6 +3,7 @@ import HeadBar from "@components/HeadBar/HeadBar";
 import LoginForm from "./LoginForm";
 
 function LoginPage(){
+	
 	return (
 		<HeadBar otherElements={[
 			<CrossButton address={"/"}/>

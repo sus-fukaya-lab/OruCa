@@ -3,7 +3,9 @@ from nfc.tag import Tag
 from nfc.tag.tt3 import BlockCode, ServiceCode
 from typing import cast
 import requests
-import json
+from functools import partial
+import time
+
 
 SYSTEM_CODE = 0xFE00  # FeliCaのサービスコード
 API_URL = "http://api:3000/log/write"  # HTTP POST先のURL
@@ -50,10 +52,18 @@ def on_release(tag):
     return True
 
 def main():
-    with nfc.ContactlessFrontend("usb") as clf:
-        print("NFC reader connected. Waiting for card...")
-        while True:
-            clf.connect(rdwr={"on-connect": on_connect, "on-release": on_release})
+    while True:
+        try:
+            with nfc.ContactlessFrontend("usb") as clf:
+                print("NFC reader connected. Waiting for card...")
+                while True:
+                    clf.connect(rdwr={
+                            "on-connect": on_connect, 
+                            "on-release": on_release,
+                            "iterations":1})
+        except Exception as e:
+            print(e)
+            time.sleep(2)
 
 if __name__ == "__main__":
     main()

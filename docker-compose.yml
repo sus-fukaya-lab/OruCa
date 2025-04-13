@@ -29,7 +29,6 @@ services:
     profiles:
       - "prod"
 
-
   mysql:
     build:
       context: mysql
@@ -76,6 +75,7 @@ services:
     container_name: ORuCa_nfc
     build:
       context: nfc  # Dockerfileが存在するディレクトリ
+    init: true # PID 1 問題を解決するらしい
     working_dir: /app
     volumes:
       - ./nfc:/app:rw

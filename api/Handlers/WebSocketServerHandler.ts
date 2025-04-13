@@ -41,7 +41,7 @@ export class WebSocketServerHandler {
 				type: "log/write",
 				payload: {
 					result: false,
-					content: undefined,
+					content: [],
 					message: "不明なエラー",
 				},
 			};
@@ -49,22 +49,22 @@ export class WebSocketServerHandler {
 				await this.connectionPool.execute("CALL insert_or_update_log(?);", [payload.content.student_ID]);
 				jsonMsg.payload = {
 					result: true,
-					content: undefined,
+					content: [],
 					message: "データが挿入されました"
 				}
 				res.status(200).json(jsonMsg);
+				this.messageHandler.broadcastData();
 				return;
 			} catch (error) {
 				jsonMsg.payload = {
 					result: false,
-					content: undefined,
+					content: [],
 					message: `データの挿入に失敗しました:${error}`
 				}
 				res.status(400).json(jsonMsg);
 				return;
 			}
 		});
-
 		this.wss.on("connection", (ws: WebSocket.WebSocket) => {
 			this.handleConnection(ws);
 		});
@@ -74,6 +74,14 @@ export class WebSocketServerHandler {
 		console.log("クライアントが接続しました");
 
 		// 初期データをこのクライアントに送信
+		sendWsMessage(ws,{
+			type:"log/fetch",
+			payload:{
+				result:true,
+				content: await this.messageHandler.fetchLogs(),
+				message: "クライアントが接続しました"
+			}
+		});
 
 		// メッセージ受信処理
 		ws.on("message", (message) => {
@@ -81,7 +89,6 @@ export class WebSocketServerHandler {
 				const data: TWsMessage = JSON.parse(message.toString("utf-8"));
 				const handler = this.messageHandler.handlers[data.type];
 				console.log(data.type);
-				
 				if (handler) handler(ws, data);
 			} catch (error) {
 				console.error("メッセージ処理エラー:", error);

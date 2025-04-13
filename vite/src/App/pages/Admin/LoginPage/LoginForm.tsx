@@ -1,47 +1,75 @@
 // src/pages/AdminLogin.tsx
 import { Box, Button, Input, Fieldset, Field, Card } from "@chakra-ui/react";
 import { Toaster, toaster } from "@snippets/toaster";
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useWebSocket } from '@contexts/WebSocketContext';
-import { TWsMessage} from "@Apps/app.env";
+import { TWsMessage } from "@Apps/app.env";
 
 export const LoginForm = () => {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
-	const [success, setSuccess] = useState(false);
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { socket } = useWebSocket();
+
 	useMemo(() => {
 		if (socket && socket.readyState === WebSocket.OPEN) {
 			socket.onmessage = (event) => {
 				const d: TWsMessage = JSON.parse(event.data);
-				if (d.type === "user/auth") {
-					const {result} = d.payload.content as {result:boolean};
-					setSuccess(result);
+				if (d.type === "user/auth" && d.payload.content) {
+					const { result } = d.payload;
+					if (result) {
+						navigate("/admin/settings", { state: { loginStatus: true } });
+					} else {
+						toaster.create({
+							title: "ログイン失敗",
+							description: "ユーザー名またはパスワードが間違っています。",
+							type: "error",
+							duration: 3000,
+						});
+					}
 				}
 			};
 
 		}
-
 	}, [socket]);
 
-	const handleSubmit = () => {
-		if (success) {
-			toaster.create({
-				title: "ログイン成功",
-				type: "success",
-				duration: 3000,
+	useEffect(() => {
+		if (location.state?.loginStatus === false) {
+			Promise.resolve().then(() => {
+				toaster.create({
+					title: "ログイン失敗",
+					description: "アクセスに失敗しました",
+					type: "error",
+					duration: 3000,
+				});
 			});
-			navigate("/admin/settings");
-		} else {
+			// これがないと戻るときにも表示される可能性があるため state を消す
+			window.history.replaceState({}, document.title);
+		}
+	}, [location.state]);
+
+	const handleSubmit = () => {
+		if (!socket) {
 			toaster.create({
 				title: "ログイン失敗",
-				description: "ユーザー名またはパスワードが間違っています。",
+				description: "認証サーバーとの通信が出来ませんでした",
 				type: "error",
 				duration: 3000,
 			});
+			return;
 		}
+		const jsonMsg: TWsMessage = {
+			type: "user/auth",
+			payload: {
+				result: true,
+				content: [{ student_ID: username, password: password }],
+				message: "認証"
+			}
+		}
+		socket.send(JSON.stringify(jsonMsg));
+		window.history.replaceState({}, document.title);
 	};
 
 
@@ -57,33 +85,49 @@ export const LoginForm = () => {
 				<Card.Root
 					w={"50%"}
 					p={10}
-					borderColor={"blackAlpha.600"}
+					borderWidth={2}
+					borderColor={"default/20"}
+					shadow={"md"}
 				>
-					<Card.Body gap="2">
+					<Card.Body>
 						<Fieldset.Root gap={7} size={"lg"}>
-							<Fieldset.Legend fontSize={"2xl"}>管理者ログイン</Fieldset.Legend>
-							<Fieldset.Content gap={10}>
+							<Fieldset.Legend
+								fontSize={"2xl"} color={"default"} fontWeight={"semibold"} pb={2}
+							>
+								管理者ログイン
+							</Fieldset.Legend>
+							<Fieldset.Content gap={12} color={"default"}>
 								<Field.Root>
-									<Field.Label>ユーザー名</Field.Label>
+									<Field.Label fontSize={"lg"}>ユーザー名</Field.Label>
 									<Input
 										name="name"
 										type="text"
+										fontSize={"lg"}
 										value={username}
 										onChange={(e) => setUsername(e.target.value)} />
 								</Field.Root>
 								<Field.Root>
-									<Field.Label>パスワード</Field.Label>
+									<Field.Label fontSize={"lg"}>パスワード</Field.Label>
 									<Input
 										type="password"
 										name="password"
+										fontSize={"lg"}
 										value={password}
 										onChange={(e) => setPassword(e.target.value)}
 									/>
 								</Field.Root>
 							</Fieldset.Content>
 							<Button
-								backgroundColor="teal"
-								onClick={handleSubmit}>
+								transition={"backgrounds"}
+								transitionDuration="fast"
+								bgColor={{
+									base: "default",
+									_hover: "rgb(83, 63, 194)"
+								}}
+								py={5}
+								fontSize={"lg"}
+								onClick={handleSubmit}
+							>
 								ログイン
 							</Button>
 						</Fieldset.Root>

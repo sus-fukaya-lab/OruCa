@@ -3,7 +3,7 @@ import MainPage from "@pages/MainPage"
 import LoginPage from '@pages/Admin/LoginPage';
 import SettingsPage from '@pages/Admin/SettingsPage';
 import {WebSocketProvider} from "@contexts/WebSocketContext";
-
+import { ProtectedRoute } from '@components/ProtectedRoute.';
 
 function App() {
   return (
@@ -14,7 +14,7 @@ function App() {
           <Route path="/admin" element={<LoginPage />} />
           <Route
             path="/admin/settings"
-            element={<SettingsPage />}
+            element={<ProtectedRoute><SettingsPage /></ProtectedRoute>}
           />
         </Routes>
       </Router>
