@@ -2,10 +2,13 @@ services:
  # 開発用 Vite
   vite:
     image: node:20
+    build:
+      context: ./vite
     container_name: ORuCa_vite
     working_dir: /app
     volumes:
       - ./vite:/app:rw
+      - /app/node_modules
     ports:
       - "4000:4000"
     command: ["tail","-f","/dev/null"]
@@ -60,6 +63,7 @@ services:
     container_name: ORuCa_api
     volumes:
       - ./api:/app:rw
+      - /app/node_modules
     env_file:
       - .env
     ports:

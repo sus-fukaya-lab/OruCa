@@ -1,4 +1,3 @@
 nfcpy
 requests
 websockets
-simpleaudio
