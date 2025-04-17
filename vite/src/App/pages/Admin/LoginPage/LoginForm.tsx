@@ -3,18 +3,18 @@ import { TWsMessage } from "@Apps/app.env";
 import { Box, Button, Card, Field, Fieldset, Input } from "@chakra-ui/react";
 import { useWebSocket } from '@contexts/WebSocketContext';
 import { Toaster, toaster } from "@snippets/toaster";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const LoginForm = () => {
-	const defalutFocus = useRef<HTMLInputElement>(null);
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { socket } = useWebSocket();
+	
 
-	useMemo(() => {
+	useEffect(() => {
 		if (socket && socket.readyState === WebSocket.OPEN) {
 			socket.onmessage = (event) => {
 				const d: TWsMessage = JSON.parse(event.data);
@@ -51,10 +51,6 @@ export const LoginForm = () => {
 		}
 	}, [location.state]);
 	
-	useEffect(() => {
-		defalutFocus.current?.focus();
-	}, []);
-
 	const handleSubmit = () => {
 		if (!socket) {
 			toaster.create({
@@ -77,6 +73,13 @@ export const LoginForm = () => {
 		window.history.replaceState({}, document.title);
 	};
 
+	const nameInputRef = useRef<HTMLInputElement>(null);
+	const passInputRef = useRef<HTMLInputElement>(null);
+	const submitButtonRef = useRef<HTMLButtonElement>(null);
+
+	useEffect(() => {
+		nameInputRef.current?.focus();
+	}, []);
 
 	return (
 		<>
@@ -109,9 +112,14 @@ export const LoginForm = () => {
 										type="text"
 										fontSize={"lg"}
 										value={username}
-										onChange={(e) => setUsername(e.target.value)} 	
-										ref={defalutFocus}
-									/>
+										onChange={(e) => setUsername(e.target.value)} 
+										onKeyDown={(e)=>{
+											if(e.key === "Enter"){
+												passInputRef.current?.focus();
+											}
+										}}
+										ref={nameInputRef}
+										/>
 								</Field.Root>
 								<Field.Root>
 									<Field.Label fontSize={"lg"}>パスワード</Field.Label>
@@ -121,7 +129,13 @@ export const LoginForm = () => {
 										fontSize={"lg"}
 										value={password}
 										onChange={(e) => setPassword(e.target.value)}
-									/>
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												submitButtonRef.current?.focus();
+											}
+										}}
+										ref={passInputRef}
+										/>
 								</Field.Root>
 							</Fieldset.Content>
 							<Button
@@ -134,6 +148,7 @@ export const LoginForm = () => {
 								py={5}
 								fontSize={"lg"}
 								onClick={handleSubmit}
+								ref={submitButtonRef}
 							>
 								ログイン
 							</Button>

@@ -1,21 +1,21 @@
 import { IconButton } from "@chakra-ui/react";
 import React from "react";
-import { BsArrowReturnLeft } from "react-icons/bs";
+import { AiOutlineHome } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 
-type TReturnButton = {
+type THomeButton = {
 	address:string
 }
 
-const ReturnButton:React.FC<TReturnButton> = ({address})=>{
+const HomeButton:React.FC<THomeButton> = ({address})=>{
 	const navigate = useNavigate();
 	const handleClick = () => {
 		navigate(address);
 	};
 	return (
 		<IconButton
-			aria-label="Return Before Page"
-			backgroundColor={"red.500"}
+			aria-label="Return MainPage"
+			backgroundColor={"default"}
 			shadow={"md"}
 			transition="transform 0.8s ease-in-out"
 			_hover={{
@@ -24,9 +24,9 @@ const ReturnButton:React.FC<TReturnButton> = ({address})=>{
 			size={"xl"}
 			onClick={handleClick}
 		>
-			<BsArrowReturnLeft/>
+			<AiOutlineHome/>
 		</IconButton>
 	)
 }
 
-export default ReturnButton;
+export default HomeButton;

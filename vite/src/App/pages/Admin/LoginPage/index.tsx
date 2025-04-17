@@ -1,12 +1,12 @@
 import HeadBar from "@components/HeadBar/HeadBar";
-import ReturnButton from "@components/ReturnButton";
+import HomeButton from "@components/HomeButton";
 import LoginForm from "./LoginForm";
 
 function LoginPage(){
 	
 	return (
 		<HeadBar otherElements={[
-			<ReturnButton address={"/"}/>
+			<HomeButton address={"/"}/>
 		]}>
 			<LoginForm/>
 		</HeadBar>

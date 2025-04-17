@@ -2,19 +2,19 @@ import { APIData, TWsMessage } from '@Apps/app.env';
 import { useWebSocket } from '@Apps/contexts/WebSocketContext';
 import { Table } from '@chakra-ui/react';
 import DeleteButton from '@components/DeleteButton';
+import TableEmptyState from '@components/TableEmptyState';
 import { toaster, Toaster } from "@snippets/toaster";
 import { useEffect, useState } from 'react';
+import DeleteDialog from './DeleteDialog';
 import NameInput from './NameInput';
 
 
 // DataTable コンポーネント
 function EditableDataTable() {
-
 	// 状態管理
 	const [data, setData] = useState<APIData[]>([]);
-	const [isVisible, setIsVisible] = useState(false);
 	const { socket, requestData, sendMessage } = useWebSocket();
-	const [isSubmit, setIsSubmit] = useState(false);
+	const [_isSubmit, setIsSubmit] = useState(false);
 
 
 	// WebSocketの初期化
@@ -76,6 +76,7 @@ function EditableDataTable() {
 	const handleSubmit = (student_ID: string, student_Name: string) => {
 		if (!socket) return;
 		setIsSubmit(true);
+		if(student_Name === "")return;
 		sendMessage({
 			type: "user/update_name",
 			payload: {
@@ -84,6 +85,7 @@ function EditableDataTable() {
 				message: `${student_ID}の名前を${student_Name}に変更`
 			}
 		});
+
 		return;
 	};
 
@@ -119,6 +121,47 @@ function EditableDataTable() {
 		py: 3
 	}
 
+	const TableBody = () => {
+
+		if (data.length <= 0) {
+			return (
+				<Table.Row>
+					<Table.Cell colSpan={4} {...tdStyles}>
+						<TableEmptyState />
+					</Table.Cell>
+				</Table.Row>
+			);
+		} else {
+			return (
+				<>
+					{
+						data.map((item) => (
+							<Table.Row key={item.student_ID} _hover={{ bg: 'gray.100' }}>
+								<Table.Cell {...tdStyles}>{item.student_ID}</Table.Cell>
+								<Table.Cell {...tdStyles}>
+									<NameInput
+										student_ID={item.student_ID}
+										student_Name={item.student_Name}
+										onClick={handleSubmit}
+									/>
+								</Table.Cell>
+								<Table.Cell {...tdStyles}>
+									<DeleteDialog
+										trigger={<DeleteButton />}
+										student_ID={item.student_ID}
+										student_Name={item.student_Name}
+										onApproved={() => deleteUser(item.student_ID)}
+									/>
+								</Table.Cell>
+							</Table.Row>
+						))
+					}
+				</>
+			);
+		}
+	}
+
+
 	return (
 		<>
 			<Table.ScrollArea borderWidth="2px" rounded="md" shadow={"md"} maxH={"80vh"}>
@@ -131,21 +174,7 @@ function EditableDataTable() {
 						</Table.Row>
 					</Table.Header>
 					<Table.Body fontSize={"xl"}>
-						{data.map((item) => (
-							<Table.Row key={item.student_ID} _hover={{ bg: 'gray.100' }}>
-								<Table.Cell {...tdStyles}>{item.student_ID}</Table.Cell>
-								<Table.Cell {...tdStyles}>
-									<NameInput
-										student_ID={item.student_ID}
-										student_Name={item.student_Name}
-										onClick={handleSubmit}
-									/>
-								</Table.Cell>
-								<Table.Cell {...tdStyles}>
-									<DeleteButton onClick={()=>deleteUser(item.student_ID)}/>
-								</Table.Cell>
-							</Table.Row>
-						))}
+						<TableBody/>
 					</Table.Body>
 				</Table.Root>
 			</Table.ScrollArea>
@@ -153,5 +182,7 @@ function EditableDataTable() {
 		</>
 	);
 }
+
+
 
 export default EditableDataTable;

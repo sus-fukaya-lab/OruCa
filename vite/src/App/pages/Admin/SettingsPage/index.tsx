@@ -1,7 +1,8 @@
 // src/pages/AdminSetting.tsx
 import { Box, Heading, Text, VStack } from "@chakra-ui/react";
 import HeadBar from "@components/HeadBar/HeadBar";
-import CrossButton from "@components/ReturnButton";
+import HomeButton from "@components/HomeButton";
+import ReturnButton from "@components/ReturnButton";
 import { Toaster, toaster } from "@snippets/toaster";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -25,7 +26,7 @@ function SettingsPage() {
 	},[location.state]);
 	return (
 		<>
-			<HeadBar otherElements={[<CrossButton address={"/"} />]}>
+			<HeadBar otherElements={[<ReturnButton address={"/admin"} />,<HomeButton address={"/"} />]}>
 				<VStack p={6} gap={4} align={"left"}>
 					<Heading size={"2xl"}>管理者用ページ</Heading>
 					<Text>ここはログイン済みのユーザーのみアクセス可能です。</Text>
