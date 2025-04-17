@@ -1,12 +1,12 @@
-import CrossButton from "@components/CrossButton";
 import HeadBar from "@components/HeadBar/HeadBar";
+import ReturnButton from "@components/ReturnButton";
 import LoginForm from "./LoginForm";
 
 function LoginPage(){
 	
 	return (
 		<HeadBar otherElements={[
-			<CrossButton address={"/"}/>
+			<ReturnButton address={"/"}/>
 		]}>
 			<LoginForm/>
 		</HeadBar>

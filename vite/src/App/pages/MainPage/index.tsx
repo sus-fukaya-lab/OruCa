@@ -1,7 +1,7 @@
-import DataTable from "@pages/MainPage/DataTable";
+import { Box } from "@chakra-ui/react";
 import HeadBar from "@components/HeadBar/HeadBar";
 import SettingButton from "@components/SettingButton";
-import { Box } from "@chakra-ui/react";
+import DataTable from "@pages/MainPage/DataTable";
 
 function MainPage() {
 	return (

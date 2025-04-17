@@ -1,32 +1,22 @@
+import { IconButton, IconButtonProps } from "@chakra-ui/react";
 import React from "react";
 import { RxCross2 } from "react-icons/rx";
-import { IconButton } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
 
-type TSettingButton = {
-	address:string
-}
-
-const CrossButton:React.FC<TSettingButton> = ({address})=>{
-	const navigate = useNavigate();
-	const handleClick = () => {
-		navigate(address);
-	};
+const CrossButton: React.FC<IconButtonProps> = ({...props}) => {
 	return (
 		<IconButton
-			aria-label="Open Settings Page"
-			backgroundColor={"red"}
+			aria-label={"Cancel edit"}
+			backgroundColor={"red.400"}
 			shadow={"md"}
-			transition="transform 0.6s ease-in-out"
+			size={"md"}
 			_hover={{
-				transform: 'rotate(180deg)',
+				transform: "scale(1.1)"
 			}}
-			size={"xl"}
-			onClick={handleClick}
+			{...props}
+
 		>
 			<RxCross2/>
 		</IconButton>
-	)
+	);
 }
-
 export default CrossButton;

@@ -1,4 +1,4 @@
-import { createSystem,defaultConfig } from '@chakra-ui/react'
+import { createSystem, defaultConfig } from '@chakra-ui/react';
 import '@fontsource/biz-udpgothic/400.css';
 
 export const customSystem = createSystem(defaultConfig, {

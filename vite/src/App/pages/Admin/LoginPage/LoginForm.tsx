@@ -1,12 +1,13 @@
 // src/pages/AdminLogin.tsx
-import { Box, Button, Input, Fieldset, Field, Card } from "@chakra-ui/react";
-import { Toaster, toaster } from "@snippets/toaster";
-import { useState, useMemo, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useWebSocket } from '@contexts/WebSocketContext';
 import { TWsMessage } from "@Apps/app.env";
+import { Box, Button, Card, Field, Fieldset, Input } from "@chakra-ui/react";
+import { useWebSocket } from '@contexts/WebSocketContext';
+import { Toaster, toaster } from "@snippets/toaster";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export const LoginForm = () => {
+	const defalutFocus = useRef<HTMLInputElement>(null);
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
@@ -49,6 +50,10 @@ export const LoginForm = () => {
 			window.history.replaceState({}, document.title);
 		}
 	}, [location.state]);
+	
+	useEffect(() => {
+		defalutFocus.current?.focus();
+	}, []);
 
 	const handleSubmit = () => {
 		if (!socket) {
@@ -77,7 +82,7 @@ export const LoginForm = () => {
 		<>
 			<Box
 				w={"100%"}
-				h={"100%"}
+				h={"80%"}
 				display={"flex"}
 				alignItems={"center"}
 				justifyContent={"center"}
@@ -104,7 +109,9 @@ export const LoginForm = () => {
 										type="text"
 										fontSize={"lg"}
 										value={username}
-										onChange={(e) => setUsername(e.target.value)} />
+										onChange={(e) => setUsername(e.target.value)} 	
+										ref={defalutFocus}
+									/>
 								</Field.Root>
 								<Field.Root>
 									<Field.Label fontSize={"lg"}>パスワード</Field.Label>

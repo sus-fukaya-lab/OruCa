@@ -1,11 +1,11 @@
 // src/pages/AdminSetting.tsx
-import CrossButton from "@components/CrossButton";
+import { Box, Heading, Text, VStack } from "@chakra-ui/react";
 import HeadBar from "@components/HeadBar/HeadBar";
-import { Box, Heading, Text, Button, VStack } from "@chakra-ui/react";
-import { useNavigate,useLocation } from "react-router-dom";
-import { Toaster,toaster } from "@snippets/toaster";
+import CrossButton from "@components/ReturnButton";
+import { Toaster, toaster } from "@snippets/toaster";
 import { useEffect } from "react";
-import DataTable from "@pages/MainPage/DataTable";
+import { useLocation } from "react-router-dom";
+import EditableDataTable from "./EditableDataTable";
 
 
 function SettingsPage() {
@@ -29,8 +29,8 @@ function SettingsPage() {
 				<VStack p={6} gap={4} align={"left"}>
 					<Heading size={"2xl"}>管理者用ページ</Heading>
 					<Text>ここはログイン済みのユーザーのみアクセス可能です。</Text>
-					<Box w={"100%"} h={"100%"} pt={"10%"}>
-						<DataTable/>
+					<Box w={"100%"} h={"100%"} pt={"2%"}>
+						<EditableDataTable/>
 					</Box>
 				</VStack>
 			</HeadBar>

@@ -1,14 +1,33 @@
-import { useState, useMemo} from 'react';
-import { Table, Box } from '@chakra-ui/react';
-import * as dateFns from "date-fns";
-import { useWebSocket } from '@Apps/contexts/WebSocketContext';
-import Badge from '@components/Badge'; // 既存のBadgeコンポーネントを使用
 import { APIData, TWsMessage } from '@Apps/app.env';
+import { useWebSocket } from '@Apps/contexts/WebSocketContext';
+import { Table } from '@chakra-ui/react';
+import Badge from '@components/Badge'; // 既存のBadgeコンポーネントを使用
+import * as dateFns from "date-fns";
+import { useEffect, useRef, useState } from 'react';
 
 function formatTime(isoString: string) {
 	const date = dateFns.parseISO(isoString);
 	return dateFns.format(date, 'HH:mm:ss'); // JSTの時分秒をフォーマット
 }
+
+function playBeep(hz:number,volume:number,length:number){
+	const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+	const oscillator = audioCtx.createOscillator();
+	const gainNode = audioCtx.createGain();
+
+	// オシレーター設定：矩形波・周波数は1000Hz
+	oscillator.type = "square";
+	oscillator.frequency.setValueAtTime(hz, audioCtx.currentTime);
+
+	// 音量設定
+	gainNode.gain.setValueAtTime(volume, audioCtx.currentTime); // 適度な音量
+	oscillator.connect(gainNode);
+	gainNode.connect(audioCtx.destination);
+
+	// 再生
+	oscillator.start();
+	oscillator.stop(audioCtx.currentTime + length); // 0.1秒後に停止（短い「ピッ」音）
+};
 
 // DataTable コンポーネント
 function DataTable() {
@@ -21,22 +40,53 @@ function DataTable() {
 	const { socket, requestData } = useWebSocket();
 
 	// WebSocketの初期化
-	useMemo(() => {
-		if (socket) {
-			socket.onmessage = (event) => {
-				const d: TWsMessage = JSON.parse(event.data);
-				if (d.type === "log/fetch") {
-					if (d.payload.content) {
-						const newData = d.payload.content as APIData[];
-						setData(newData);
-						setIsVisible(newData.length > 0);
-						}
-					}
-				}
+	useEffect(() => {
+		if (!socket)return; 
+		const handleMessage = (event: MessageEvent) => {
+			const d: TWsMessage = JSON.parse(event.data);
+			if (d.type === "log/fetch" && d.payload.content) {
+				const newData = d.payload.content as APIData[];
+				setData(newData);
+				setIsVisible(newData.length > 0);
+			}
 		};
-			// ページ再マウント時にデータをリクエスト
-			requestData();
+		socket.addEventListener("message", handleMessage);
+
+		// 初期データ要求
+		requestData();
+
+		// クリーンアップ
+		return () => {
+			socket.removeEventListener("message", handleMessage);
+		};
 	}, [socket]);
+
+	const didMountRef = useRef(false);
+	useEffect(()=>{
+		if (data.length > 0) {
+			if (!didMountRef.current) {
+				didMountRef.current = true;
+				return;
+			}else{
+				const chance = Math.floor(Math.random() * 8192); // 0〜8191 の整数
+				if (chance === 0) {
+					// レア音鳴らす処理（1/8192 の確率）
+					const src = "./god.mp3";
+					const audio = new Audio(src);
+					audio.play().catch((e) => {
+						console.warn('音声の再生に失敗しました:', e);
+					});
+				} else {
+					// ノーマル音
+					playBeep(1200,0.1,0.2);
+				}
+				return;
+			}
+		}
+		return ()=>{
+			didMountRef.current = false;
+		}
+	},[data]);
 
 	const thStyles: Table.ColumnHeaderProps = {
 		color: "gray.100",
@@ -49,12 +99,13 @@ function DataTable() {
 		textAlign: "center",
 		letterSpacing: 1,
 		fontWeight: "semibold",
-		fontSize: "2xl"
+		fontSize: "xl",
+		py:1
 	}
 
 	return (
 		<Table.ScrollArea borderWidth="2px" rounded="md" shadow={"md"}>
-			<Table.Root variant={"outline"} size="md" stickyHeader fontSize={"lg"}>
+			<Table.Root variant={"outline"} tableLayout={"fixed"} size="md" stickyHeader fontSize={"lg"}>
 				<Table.Header bg={"rgb(43, 37, 108)"}>
 					<Table.Row>
 						<Table.ColumnHeader {...thStyles}>学籍番号</Table.ColumnHeader>

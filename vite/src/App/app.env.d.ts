@@ -5,7 +5,7 @@ export type APIData = {
 	updated_at: string;
 };
 
-export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken";
+export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken" | "user/delete";
 export type TWsPayLoad = {
 	result: boolean,
 	content: undefined | Record<string, any>[],

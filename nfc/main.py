@@ -56,11 +56,15 @@ def main():
         try:
             with nfc.ContactlessFrontend("usb") as clf:
                 print("NFC reader connected. Waiting for card...")
+                after1s = lambda: time.time() - started > 1
                 while True:
+                    started = time.time()
                     clf.connect(rdwr={
                             "on-connect": on_connect, 
                             "on-release": on_release,
-                            "iterations":1})
+                            "iterations":1},
+                            terminate=after1s
+                            )
         except Exception as e:
             print(e)
             time.sleep(2)

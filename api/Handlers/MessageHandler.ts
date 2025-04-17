@@ -1,12 +1,17 @@
-import { TWsMessage, TWsProcessType } from "../config";
-import mysql from "mysql2/promise";
-import express from "express";
 import { createHash } from "crypto";
+import express from "express";
+import mysql from "mysql2/promise";
 import WebSocket from "ws";
+import { TWsMessage, TWsProcessType } from "../config";
 import { hasProps, sendWsMessage } from '../utils';
 
 // HandlerFunction型定義
 type HandlerFunction = (ws: WebSocket.WebSocket, data: TWsMessage) => void;
+
+type DBresult = {
+	"default": [mysql.RowDataPacket[], mysql.ResultSetHeader];
+	"noHead": [mysql.RowDataPacket[]];
+}
 
 export class MessageHandler {
 	private wss: WebSocket.Server;
@@ -22,7 +27,8 @@ export class MessageHandler {
 	// 非同期でログを取得し、クライアントに送信
 	public async fetchLogs() {
 		try {
-			const [results] = await this.connectionPool.execute<[mysql.RowDataPacket[]]>("SELECT * FROM student_log_view;");
+			const query = "SELECT * FROM student_log_view;";
+			const [results] = await this.connectionPool.execute<DBresult["noHead"]>(query);
 			return results;
 		} catch (err) {
 			console.error("データ取得エラー:", err);
@@ -31,9 +37,10 @@ export class MessageHandler {
 	}
 
 	// トークンを取得する非同期メソッド
-	public async fetchToken(student_ID: string) {
+	private async fetchToken(student_ID: string) {
 		try {
-			const [packet] = await this.connectionPool.execute<[mysql.RowDataPacket[], mysql.ResultSetHeader]>("CALL get_student_token(?);", [student_ID]);
+			const query = "CALL get_student_token(?);"
+			const [packet] = await this.connectionPool.execute<DBresult["default"]>(query, [student_ID]);
 			const [results] = packet;
 			return results;
 		} catch (err) {
@@ -41,6 +48,27 @@ export class MessageHandler {
 			return [];
 		}
 	}
+
+	private async updateName(student_ID:string,student_Name:string){
+		try {
+			const query = "CALL update_student_name(?,?);"
+			await this.connectionPool.execute<DBresult["default"]>(query, [student_ID,student_Name]);
+		} catch (err) {
+			console.error("データ更新エラー:", err);
+			throw err;
+		}
+	}
+
+	private async deleteUser(student_ID:string){
+		try {
+			const query = `DELETE FROM users WHERE student_ID = ?;`
+			await this.connectionPool.execute<DBresult["default"]>(query, [student_ID]);
+		} catch (err) {
+			console.error("データ削除エラー:", err);
+			throw err;
+		}
+	}
+	
 
 	// データ更新のブロードキャスト
 	public async broadcastData() {
@@ -101,7 +129,6 @@ export class MessageHandler {
 				console.error("ログ取得エラー:", error);
 			}
 		},
-
 		"log/write": async (ws, data) => {
 			const content = data.payload?.content;
 			if (!hasProps<{ student_ID: string}>(content, ["student_ID"])) return;
@@ -165,7 +192,7 @@ export class MessageHandler {
 
 				jsonMsg.payload = {
 					result: true,
-					content: result,
+					content: [result],
 					message: "認証トークンのfetch"
 				}
 				sendWsMessage(ws,jsonMsg);
@@ -237,6 +264,83 @@ export class MessageHandler {
 			}
 		},
 		"user/update_name":async (ws,data)=>{
+			const [content] = data.payload?.content;
+			const jsonMsg: TWsMessage = {
+				type: "user/update_name",
+				payload: {
+					result: false,
+					content: [],
+					message: "不明なエラー",
+				},
+			};
+			try {
+				if (!hasProps<{ student_ID: string; student_Name: string }>(content, ["student_ID", "student_Name"])) {
+					jsonMsg.payload = {
+						result: false,
+						content: [],
+						message: "student_ID または student_Name がありません"
+					};
+					sendWsMessage(ws, jsonMsg);
+					return;
+				}
+				const {student_ID,student_Name} = content;
+				
+				await this.updateName(student_ID,student_Name);
+				jsonMsg.payload = {
+					result: true,
+					content: [],
+					message: `更新完了（${student_ID}：${student_Name}）`,
+				};
+				sendWsMessage(ws, jsonMsg);
+			} catch (err) {
+				console.error("更新エラー:", err);
+				jsonMsg.payload = {
+					result: false,
+					content: [],
+					message: "更新失敗"
+				};
+				sendWsMessage(ws, jsonMsg);
+			}
+		},
+		"user/delete":async (ws,data) => {
+			const [content] = data.payload?.content;
+			const jsonMsg: TWsMessage = {
+				type: "user/delete",
+				payload: {
+					result: false,
+					content: [],
+					message: "不明なエラー",
+				},
+			};
+			try {
+				if (!hasProps<{ student_ID: string}>(content, ["student_ID"])) {
+					jsonMsg.payload = {
+						result: false,
+						content: [],
+						message: "student_IDがありません"
+					};
+					sendWsMessage(ws, jsonMsg);
+					return;
+				}
+				const { student_ID} = content;
+
+				await this.deleteUser(student_ID);
+
+				jsonMsg.payload = {
+					result: true,
+					content: [],
+					message: `削除完了（${student_ID}）`,
+				};
+				sendWsMessage(ws, jsonMsg);
+			} catch (err) {
+				console.error("削除エラー:", err);
+				jsonMsg.payload = {
+					result: false,
+					content: [],
+					message: "削除失敗"
+				};
+				sendWsMessage(ws, jsonMsg);
+			}
 
 		}
 	};

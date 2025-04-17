@@ -1,15 +1,16 @@
 USE OruCa_DB;
 
-CREATE TABLE logs (
-    student_ID VARCHAR(16) NOT NULL PRIMARY KEY,
-    isInRoom BOOLEAN NOT NULL DEFAULT TRUE,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
 CREATE TABLE users (
     student_ID VARCHAR(16) NOT NULL PRIMARY KEY,
     student_Name VARCHAR(64),
     student_token VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE logs (
+    student_ID VARCHAR(16) NOT NULL PRIMARY KEY,
+    isInRoom BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_logs_users FOREIGN KEY (student_ID) REFERENCES users (student_ID) ON DELETE CASCADE
 );
 
 CREATE VIEW student_token_view AS
@@ -35,7 +36,7 @@ BEGIN
     DECLARE student_salt VARCHAR(64);
     DECLARE student_token VARCHAR(64);
     
-    SET admin_pass = 'fukaya_lab_OruCa';
+    SET admin_pass = 'fukaya_lab';
 
     select admin_pass;
     
@@ -49,19 +50,20 @@ BEGIN
 
     select student_token;
 
-    -- logsテーブルへのINSERT/UPDATE
-    INSERT INTO logs (student_ID, isInRoom) 
-    VALUES (stuID, TRUE)
-    ON DUPLICATE KEY UPDATE
-        isInRoom = NOT isInRoom,
-        updated_at = CURRENT_TIMESTAMP;
-
     -- usersテーブルへのINSERT (saltとtokenを保存)
     
     IF NOT EXISTS (SELECT 1 FROM users WHERE student_ID = stuID) THEN
         INSERT INTO users (student_ID,student_Name, student_token)
         VALUES (stuID,NULL,student_token);
     END IF;
+
+    -- logsテーブルへのINSERT/UPDATE
+    INSERT INTO
+        logs (student_ID, isInRoom)
+    VALUES (stuID, TRUE)
+    ON DUPLICATE KEY UPDATE
+        isInRoom = NOT isInRoom,
+        updated_at = CURRENT_TIMESTAMP;
 END$$
 
 CREATE PROCEDURE update_student_name(IN stuID VARCHAR(16),IN stuName VARCHAR(64))
