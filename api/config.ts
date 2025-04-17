@@ -41,7 +41,7 @@ export const DB_CONFIG:IDBConfig = {
 	queueLimit:0
 }
 
-export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken" | "user/delete";
+export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken" | "user/delete" | "slackBot/post";
 export type TWsPayLoad = {
 	result:boolean,
 	content: Record<string,any>[],
@@ -51,3 +51,12 @@ export type TWsMessage = {
 	type:TWsProcessType,
 	payload:TWsPayLoad
 }
+
+export type DBresult = {
+	"default": [mysql.RowDataPacket[], mysql.ResultSetHeader];
+	"noHead": [mysql.RowDataPacket[]];
+}
+
+
+export const SLACK_BOT_TOKEN = 'xoxb-5222358263219-8771692842276-xGDbSywJIO4lO75DRnnUV3ap';
+export const SLACK_CHANNEL_ID = 'C0563TNFPPH'; // 例: C1234567890

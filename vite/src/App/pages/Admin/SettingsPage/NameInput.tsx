@@ -35,7 +35,6 @@ const NameInput: React.FC<NameInputProps> = ({ student_ID, student_Name, onClick
 		closeInput();
 	}
 	const handleInputKeyDown = (e:React.KeyboardEvent<HTMLInputElement>) => {
-		e.preventDefault(); // フォーム送信などのデフォルト動作を防止
 		if (e.key === "Enter") {
 			handleSubmit();
 		} else if (e.key === "Escape") {

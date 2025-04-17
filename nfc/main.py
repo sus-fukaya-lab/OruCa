@@ -63,7 +63,7 @@ def main():
                             "on-connect": on_connect, 
                             "on-release": on_release,
                             "iterations":1},
-                            terminate=after1s
+                            # terminate=after1s
                             )
         except Exception as e:
             print(e)

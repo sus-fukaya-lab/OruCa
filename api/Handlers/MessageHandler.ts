@@ -2,16 +2,11 @@ import { createHash } from "crypto";
 import express from "express";
 import mysql from "mysql2/promise";
 import WebSocket from "ws";
-import { TWsMessage, TWsProcessType } from "../config";
+import { DBresult, TWsMessage, TWsProcessType } from "../config";
 import { hasProps, sendWsMessage } from '../utils';
 
 // HandlerFunction型定義
 type HandlerFunction = (ws: WebSocket.WebSocket, data: TWsMessage) => void;
-
-type DBresult = {
-	"default": [mysql.RowDataPacket[], mysql.ResultSetHeader];
-	"noHead": [mysql.RowDataPacket[]];
-}
 
 export class MessageHandler {
 	private wss: WebSocket.Server;
@@ -130,32 +125,7 @@ export class MessageHandler {
 			}
 		},
 		"log/write": async (ws, data) => {
-			const content = data.payload?.content;
-			if (!hasProps<{ student_ID: string}>(content, ["student_ID"])) return;
-
-			try {
-				await this.connectionPool.execute("CALL insert_or_update_log(?);", [content.student_ID]);
-				const jsonMsg: TWsMessage = {
-					type: "log/write",
-					payload: {
-						result: true,
-						content: [],
-						message: `データが挿入されました`,
-					},
-				};
-				sendWsMessage(ws, jsonMsg);
-				this.broadcastData();  // 更新データを全クライアントに送信
-			} catch (err) {
-				const jsonMsg: TWsMessage = {
-					type: "log/write",
-					payload: {
-						result: false,
-						content: [],
-						message: `データ挿入エラー:${err}`,
-					},
-				};
-				sendWsMessage(ws, jsonMsg);
-			}
+			// http側で受けてるので使ってない
 		},
 		"user/fetchToken": async (ws,data)=>{
 			const content = data.payload?.content;
@@ -213,11 +183,7 @@ export class MessageHandler {
 
 			try {
 				if (!hasProps<{ student_ID: string; password: string }>(content, ["student_ID", "password"])) {
-					jsonMsg.payload = {
-						result: false,
-						content: [],
-						message: "student_ID または password がありません"
-					};
+					jsonMsg.payload.message="student_ID または password がありません";
 					sendWsMessage(ws, jsonMsg);
 					return;
 				}
@@ -225,11 +191,7 @@ export class MessageHandler {
 				const [result] = await this.fetchToken(content.student_ID);
 
 				if (!hasProps<{ student_token: string }>(result, ["student_token"])) {
-					jsonMsg.payload = {
-						result: false,
-						content: [],
-						message: "student_tokenが取得できませんでした"
-					};
+					jsonMsg.payload.message="student_tokenが取得できませんでした";
 					sendWsMessage(ws, jsonMsg);
 					return;
 				}
@@ -342,6 +304,9 @@ export class MessageHandler {
 				sendWsMessage(ws, jsonMsg);
 			}
 
-		}
+		},
+		"slackBot/post":async (ws,data) => {
+			// 何もしない
+		}	
 	};
 }

@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 
 // DataTable コンポーネント
 function DataTable() {
-	const comvTF = [true, false];
+	const comvTF = [false, true];
 
 	// 状態管理
 	const [data, setData] = useState<APIData[]>([]);
