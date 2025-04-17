@@ -11,13 +11,9 @@ function App() {
         <Routes>
           <Route path="/" element={<MainPage />} />
           <Route path="/admin" element={<LoginPage />} />
-          {/* <Route
-            path="/admin/settings"
-            element={<ProtectedRoute><SettingsPage /></ProtectedRoute>}
-          /> */}
           <Route
             path="/admin/settings"
-            element={<SettingsPage />}
+            element={<ProtectedRoute><SettingsPage /></ProtectedRoute>}
           />
         </Routes>
       </Router>

@@ -1,7 +1,7 @@
 services:
  # 開発用 Vite
   vite:
-    image: node:20
+    image: node:20-alpine
     build:
       context: ./vite
     container_name: ORuCa_vite
@@ -20,9 +20,11 @@ services:
   # 本番用 Nginx
   web:
     image: nginx:latest
+    build: 
+      context: ./web
     container_name: ORuCa_web
     ports:
-      - "4000:80"
+      - "4040:80"
     volumes:
       - ./vite/dist:/usr/share/nginx/html:ro
     depends_on:
