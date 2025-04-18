@@ -24,7 +24,13 @@ function DataTable() {
 				setData(newData);
 			}
 		};
+		const handleClose = ()=>{
+			console.log("close");
+						
+			didMountRef.current = false;
+		}
 		socket.addEventListener("message", handleMessage);
+		socket.addEventListener("close",handleClose);
 
 		// 初期データ要求
 		requestData();
@@ -32,6 +38,7 @@ function DataTable() {
 		// クリーンアップ
 		return () => {
 			socket.removeEventListener("message", handleMessage);
+			socket.removeEventListener("close", handleClose);
 		};
 	}, [socket]);
 
