@@ -2,10 +2,10 @@
 FROM node:20-alpine
 
 # 作業ディレクトリの指定
-WORKDIR /app
+WORKDIR /vite
 
 # package.jsonをコピー
-COPY package.json ./
+COPY ./package.json .
 
 # 依存関係をインストール
 # ※イメージにすでにyarnは入ってる

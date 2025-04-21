@@ -15,10 +15,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN pip install --upgrade pip
 
 # 作業ディレクトリを作成
-WORKDIR /app
+WORKDIR /nfc
 
 # ホスト側のファイルをコピー（必要であれば）
-COPY . /app
+COPY . .
 
 # 依存関係をインストール（必要なら requirements.txt を置いてください）
 RUN pip install -r requirements.txt

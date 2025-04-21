@@ -5,10 +5,10 @@ FROM node:20-alpine
 RUN apk update && apk add --no-cache git
 
 # 作業ディレクトリを設定
-WORKDIR /app
+WORKDIR /api
 
 # package.jsonをコピー
-COPY package.json ./
+COPY ./package.json .
 
 # 依存関係をインストール
 # ※イメージにすでにyarnは入ってる
