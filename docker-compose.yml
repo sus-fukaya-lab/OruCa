@@ -3,12 +3,12 @@ services:
   vite:
     image: node:20-alpine
     build:
-      context: ./vite
+      context: vite
     container_name: ORuCa_vite
     working_dir: /app
     volumes:
       - ./vite:/app:rw
-      - /app/node_modules
+      - vite_node_modules:/app/node_modules
     ports:
       - "4000:4000"
     command: ["tail","-f","/dev/null"]
@@ -21,7 +21,7 @@ services:
   web:
     image: nginx:latest
     build: 
-      context: ./web
+      context: web
     container_name: ORuCa_web
     ports:
       - "4040:80"
@@ -47,6 +47,7 @@ services:
       - .env
     volumes:
       - ./mysql/data/init.sql:/docker-entrypoint-initdb.d/init.sql  # SQLファイルをコンテナ内にマウント
+      - mysql_data:/var/lib/mysql  # MySQLのデータを永続化
     ports:
       - "3306:3306"
     healthcheck:
@@ -65,11 +66,12 @@ services:
     container_name: ORuCa_api
     volumes:
       - ./api:/app:rw
-      - /app/node_modules
+      - api_node_modules:/app/node_modules
     env_file:
       - .env
     ports:
       - "3000:3000"
+    command: ["yarn","start"]
     depends_on:
       mysql:
         condition: service_healthy
@@ -102,3 +104,11 @@ services:
 networks:
   backend:
     driver: bridge
+
+volumes:
+  vite_node_modules:
+    driver: local
+  api_node_modules:
+    driver: local
+  mysql_data:
+    driver: local
