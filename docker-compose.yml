@@ -7,8 +7,8 @@ services:
     container_name: ORuCa_vite
     working_dir: /vite
     volumes:
-      - ./vite:/vite:rw
       - vite_node_modules:/vite/node_modules
+      - ./vite:/vite:rw
     ports:
       - "4000:4000"
     command: ["tail","-f","/dev/null"]
@@ -66,8 +66,8 @@ services:
     container_name: ORuCa_api
     working_dir: /api
     volumes:
-      - ./api:/api:rw
       - api_node_modules:/api/node_modules
+      - ./api:/api:rw
     env_file:
       - .env
     ports:

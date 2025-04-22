@@ -1,4 +1,4 @@
-.PHONY: up up-d build cache-clear 
+.PHONY: up up-d build cache-clear attach-usb
 
 # profile引数p: 例）make up p="dev prod"
 # service引数s: 例）make build t=api
@@ -14,3 +14,6 @@ build:
 
 cache-clear:
 	docker builder prune -a
+
+attach-usb:
+	./usb-wsl-attach.ps1
