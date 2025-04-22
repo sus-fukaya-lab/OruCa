@@ -1,8 +1,8 @@
 // src/pages/AdminSetting.tsx
-import { Box, Heading, Text, VStack } from "@chakra-ui/react";
-import HeadBar from "@components/HeadBar/HeadBar";
-import HomeButton from "@components/HomeButton";
-import ReturnButton from "@components/ReturnButton";
+import { Box, Heading, Text } from "@chakra-ui/react";
+import HomeButton from "@components/Buttons/HomeButton";
+import ReturnButton from "@components/Buttons/ReturnButton";
+import HeadBar from "@components/HeadBar";
 import { Toaster, toaster } from "@snippets/toaster";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -17,7 +17,7 @@ function SettingsPage() {
 				toaster.create({
 					title: "ログイン成功",
 					type: "success",
-					duration: 3000,
+					duration: 1500,
 				});
 			});
 			// これがないと戻るときにも表示される可能性があるため state を消す
@@ -27,13 +27,16 @@ function SettingsPage() {
 	return (
 		<>
 			<HeadBar otherElements={[<ReturnButton address={"/admin"} />,<HomeButton address={"/"} />]}>
-				<VStack p={6} gap={4} align={"left"}>
-					<Heading size={"2xl"}>管理者用ページ</Heading>
-					<Text>ここはログイン済みのユーザーのみアクセス可能です。</Text>
-					<Box w={"100%"} h={"100%"} pt={"2%"}>
+					<Box 
+						w={"100%"} 
+						h={"100%"}
+						px={"5%"}
+						py={["10%", null, "5%"]}
+						>
+						<Heading size={["lg", null, "2xl"]}>管理者用ページ</Heading>
+						<Text fontSize={["sm", null, "md"]}>ここはログイン済みのユーザーのみアクセス可能です。</Text>
 						<EditableDataTable/>
 					</Box>
-				</VStack>
 			</HeadBar>
 			<Toaster />
 		</>

@@ -1,32 +1,32 @@
-import React from "react";
 import { IconButton } from "@chakra-ui/react";
-import { LuSettings } from "react-icons/lu"
+import React from "react";
+import { AiOutlineHome } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 
-type TSettingButton = {
+type THomeButton = {
 	address:string
 }
 
-const SettingButton:React.FC<TSettingButton> = ({address})=>{
+const HomeButton:React.FC<THomeButton> = ({address})=>{
 	const navigate = useNavigate();
 	const handleClick = () => {
 		navigate(address);
 	};
 	return (
 		<IconButton
-			aria-label="Open Settings Page"
+			aria-label="Return MainPage"
 			backgroundColor={"default"}
 			shadow={"md"}
-			transition="transform 0.6s ease-in-out"
+			transition="transform 0.8s ease-in-out"
 			_hover={{
-				transform: 'rotate(180deg)',
+				transform: 'rotate(360deg)',
 			}}
-			size={"xl"}
+			size={["md", null, "xl"]}
 			onClick={handleClick}
 		>
-			<LuSettings/>
+			<AiOutlineHome/>
 		</IconButton>
 	)
 }
 
-export default SettingButton;
+export default HomeButton;

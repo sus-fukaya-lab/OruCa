@@ -1,5 +1,5 @@
-import HeadBar from "@components/HeadBar/HeadBar";
-import HomeButton from "@components/HomeButton";
+import HomeButton from "@components/Buttons/HomeButton";
+import HeadBar from "@components/HeadBar";
 import LoginForm from "./LoginForm";
 
 function LoginPage(){

@@ -9,14 +9,15 @@ const DeleteButton: React.FC<IconButtonProps> = ({ ...props }) => {
 				backgroundColor={"red.500"}
 				color={"white"}
 				shadow={"md"}
-				size={"md"}
+				size={["2xs", null, "md"]}
 				_hover={{
 					transform: "scale(1.1)"
 				}}
-				w={"50%"}
+				px={[1, null, 2]}
+				w={"fit-content"}
 				{...props}
 			>
-				<Text>DELETE</Text>
+			<Text fontSize={["2xs", null, "md"]}>DELETE</Text>
 			</IconButton>
 	);
 }

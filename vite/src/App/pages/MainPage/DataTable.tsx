@@ -1,8 +1,9 @@
+// DataTable.tsx
 import { APIData, TWsMessage } from '@Apps/app.env';
 import { useWebSocket } from '@Apps/contexts/WebSocketContext';
 import { Table } from '@chakra-ui/react';
-import Badge from '@components/Badge'; // 既存のBadgeコンポーネントを使用
-import TableEmptyState from '@components/TableEmptyState';
+import Badge from '@components/Badge';
+import GenericDataTable, { ColumnDefinition, getDefaultCellStyles } from '@components/GenericDataTable';
 import * as dateFns from "date-fns";
 import { useEffect, useRef, useState } from 'react';
 
@@ -13,10 +14,12 @@ function DataTable() {
 	// 状態管理
 	const [data, setData] = useState<APIData[]>([]);
 	const { socket, requestData } = useWebSocket();
+	const didMountRef = useRef(false);
 
 	// WebSocketの初期化
 	useEffect(() => {
-		if (!socket)return; 
+		if (!socket) return;
+
 		const handleMessage = (event: MessageEvent) => {
 			const d: TWsMessage = JSON.parse(event.data);
 			if (d.type === "log/fetch" && d.payload.content) {
@@ -24,13 +27,14 @@ function DataTable() {
 				setData(newData);
 			}
 		};
-		const handleClose = ()=>{
+
+		const handleClose = () => {
 			console.log("close");
-						
 			didMountRef.current = false;
-		}
+		};
+
 		socket.addEventListener("message", handleMessage);
-		socket.addEventListener("close",handleClose);
+		socket.addEventListener("close", handleClose);
 
 		// 初期データ要求
 		requestData();
@@ -42,13 +46,13 @@ function DataTable() {
 		};
 	}, [socket]);
 
-	const didMountRef = useRef(false);
-	useEffect(()=>{
+	// サウンド効果
+	useEffect(() => {
 		if (data.length > 0) {
 			if (!didMountRef.current) {
 				didMountRef.current = true;
 				return;
-			}else{
+			} else {
 				const chance = Math.floor(Math.random() * 8192); // 0〜8191 の整数
 				if (chance === 0) {
 					// レア音鳴らす処理（1/8192 の確率）
@@ -59,78 +63,51 @@ function DataTable() {
 					});
 				} else {
 					// ノーマル音
-					playBeep(1200,0.1,0.2);
+					playBeep(1200, 0.1, 0.2);
 				}
 				return;
 			}
 		}
-		return ()=>{
+		return () => {
 			didMountRef.current = false;
-		}
-	},[data]);
+		};
+	}, [data]);
 
-	const thStyles: Table.ColumnHeaderProps = {
-		color: "gray.100",
-		textAlign: "center",
-		fontWeight: "bold",
-		textTransform: "uppercase"
-	}
-	const tdStyles: Table.CellProps = {
-		color: "default",
-		textAlign: "center",
-		letterSpacing: 1,
-		fontWeight: "semibold",
-		fontSize: "xl",
-		py: 1
-	}
+	// テーブルカラム定義
+	const columns: ColumnDefinition[] = [
+		{ header: '学籍番号', key: 'student_ID' },
+		{ header: '氏名', key: 'student_Name' },
+		{ header: '在室状況', key: 'isInRoom' },
+		{ header: '最終更新時', key: 'updated_at' }
+	];
 
+	// 各行のレンダリング
+	const renderRow = (item: APIData) => {
+		const tdStyles = getDefaultCellStyles();
 
-	const TableBody = ()=>{
-		if (data.length <= 0) {
-			return (
-				<Table.Body fontSize={"xl"}>
-					<Table.Row>
-						<Table.Cell colSpan={4} {...tdStyles}>
-							<TableEmptyState />
-						</Table.Cell>
-					</Table.Row>
-				</Table.Body>
-			);
-		} else {
-			return (
-				<Table.Body fontSize={"xl"}>
-					{data.map((item) => (
-						<Table.Row key={item.student_ID} _hover={{ bg: 'gray.100' }}>
-							<Table.Cell {...tdStyles}>{item.student_ID}</Table.Cell>
-							<Table.Cell {...tdStyles} color={item.student_Name ? "default" : "none"}>
-								{item.student_Name ? item.student_Name : "未登録"}
-							</Table.Cell>
-							<Table.Cell textAlign={"center"}>
-								<Badge isTrue={comvTF[item.isInRoom]} text={{ true: '在室', false: '不在' }} />
-							</Table.Cell>
-							<Table.Cell {...tdStyles}>{formatTime(item.updated_at)}</Table.Cell>
-						</Table.Row>
-					))}
-				</Table.Body>
-			);
-		}
-
-	}
+		return (
+			<Table.Row key={item.student_ID} _hover={{ bg: 'gray.100' }}>
+				<Table.Cell {...tdStyles}>{item.student_ID}</Table.Cell>
+				<Table.Cell {...tdStyles} color={item.student_Name ? "default" : "none"}>
+					{item.student_Name ? item.student_Name : "未登録"}
+				</Table.Cell>
+				<Table.Cell textAlign="center" {...tdStyles}>
+					<Badge isTrue={comvTF[item.isInRoom]} text={{ true: '在室', false: '不在' }} />
+				</Table.Cell>
+				<Table.Cell {...tdStyles}>{formatTime(item.updated_at)}</Table.Cell>
+			</Table.Row>
+		);
+	};
 
 	return (
-		<Table.ScrollArea borderWidth="2px" rounded="md" shadow={"md"}>
-			<Table.Root variant={"outline"} tableLayout={"fixed"} size="md" stickyHeader fontSize={"lg"}>
-				<Table.Header bg={"rgb(43, 37, 108)"}>
-					<Table.Row>
-						<Table.ColumnHeader {...thStyles}>学籍番号</Table.ColumnHeader>
-						<Table.ColumnHeader {...thStyles}>氏名</Table.ColumnHeader>
-						<Table.ColumnHeader {...thStyles}>在室状況</Table.ColumnHeader>
-						<Table.ColumnHeader {...thStyles}>最終更新時</Table.ColumnHeader>
-					</Table.Row>
-				</Table.Header>
-				<TableBody/>
-			</Table.Root>
-		</Table.ScrollArea>
+		<GenericDataTable
+			columns={columns}
+			data={data}
+			renderRow={renderRow}
+			styles={{
+				maxHeight: "100%"
+			}}
+		/>
 	);
 }
 
@@ -156,7 +133,6 @@ function playBeep(hz: number, volume: number, length: number) {
 	// 再生
 	oscillator.start();
 	oscillator.stop(audioCtx.currentTime + length); // 0.1秒後に停止（短い「ピッ」音）
-};
-
+}
 
 export default DataTable;

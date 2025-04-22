@@ -1,14 +1,12 @@
 services:
  # 開発用 Vite
   vite:
-    image: node:20-alpine
     build:
-      context: vite
+      context: ./vite
+      dockerfile: Dockerfile
     container_name: ORuCa_vite
-    working_dir: /vite
     volumes:
-      - vite_node_modules:/vite/node_modules
-      - ./vite:/vite:rw
+      - ./vite:/app:rw
     ports:
       - "4000:4000"
     command: ["tail","-f","/dev/null"]
@@ -19,7 +17,6 @@ services:
 
   # 本番用 Nginx
   web:
-    image: nginx:latest
     build: 
       context: web
     container_name: ORuCa_web
@@ -60,19 +57,17 @@ services:
       - backend
 
   api:
-    image: node:20-alpine
     build:
-      context: api
+      context: ./api
+      dockerfile: Dockerfile
     container_name: ORuCa_api
-    working_dir: /api
     volumes:
-      - api_node_modules:/api/node_modules
-      - ./api:/api:rw
+      - ./api:/app:rw
     env_file:
       - .env
     ports:
       - "3000:3000"
-    command: ["tail","-f","/dev/null"]
+    command: ["yarn","start"]
     depends_on:
       mysql:
         condition: service_healthy
@@ -80,14 +75,12 @@ services:
       - backend
 
   nfc:
-    image: python:3.13-alpine
     container_name: ORuCa_nfc
     build:
       context: nfc  # Dockerfileが存在するディレクトリ
     init: true # PID 1 問題を解決するらしい
-    working_dir: /nfc
     volumes:
-      - ./nfc:/nfc:rw
+      - ./nfc:/app:rw
     ports:
       - "8000:8000"  # コンテナ内のポート8000をホストのポート8000にバインド
     environment:
@@ -107,6 +100,4 @@ networks:
     driver: bridge
 
 volumes:
-  vite_node_modules:
-  api_node_modules:
   mysql_data:

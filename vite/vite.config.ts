@@ -34,6 +34,12 @@ export default defineConfig({
       usePolling:true,
       interval:1000
     },
+    fs:{
+      allow: [
+        "/node_modules/@fontsource",
+        "/app"
+      ],
+    },
     proxy: {
       '/api': {
         target: 'http://api:3000', // Docker Composeのサービス名

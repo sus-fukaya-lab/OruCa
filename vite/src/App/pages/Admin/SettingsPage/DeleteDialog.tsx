@@ -12,27 +12,27 @@ type DeleteDialogProps = {
 
 const DeleteDialog:React.FC<DeleteDialogProps> = ({trigger,student_ID,student_Name,onApproved,onCanceled})=>{
 	return (
-		<Dialog.Root size={"sm"}>
+		<Dialog.Root size={["xs", null, "lg"]}>
 			<Dialog.Trigger asChild>
 				{trigger}
 			</Dialog.Trigger>
 			<Portal>
 				<Dialog.Backdrop />
 				<Dialog.Positioner>
-					<Dialog.Content>
+					<Dialog.Content w={["85%", null, "100%"]} color={"default"}>
 						<Dialog.Header>
-							<Dialog.Title>ユーザー削除の確認</Dialog.Title>
+							<Dialog.Title fontSize={["md", null, "2xl"]}>ユーザー削除の確認</Dialog.Title>
 						</Dialog.Header>
 						<Dialog.Body>
-							<VStack p={4} gapY={2} align={"flex-start"}>
-								<Text fontWeight="bold" fontSize="lg" mb={2}>
+							<VStack p={[1,null,4]} gapY={6} align={"flex-start"}>
+								<Text fontWeight="bold" fontSize={["md",null,"xl"]} mb={2}>
 									ユーザー
 								</Text>
-								<Box pl={6} mb={1}>
+								<Box pl={6} mb={1} fontSize={["xs", null, "lg"]}>
 									<Text>ID: {student_ID}</Text>
 									<Text>Name: {student_Name}</Text>
 								</Box>
-								<Text color="red.600" fontWeight="medium">
+								<Text color="red.600" fontWeight="medium" fontSize={["md", null, "xl"]}>
 									以上を削除します。よろしいですか？
 								</Text>
 							</VStack>
@@ -42,6 +42,8 @@ const DeleteDialog:React.FC<DeleteDialogProps> = ({trigger,student_ID,student_Na
 								variant="surface" 
 								onClick={onApproved} 
 								colorPalette={"red"}
+								size={["xs", null, "md"]}
+								fontSize={["xs", null, "lg"]}
 							>DELETE</Button>
 						</Dialog.Footer>
 						<Dialog.CloseTrigger asChild>

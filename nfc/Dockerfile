@@ -15,7 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN pip install --upgrade pip
 
 # 作業ディレクトリを作成
-WORKDIR /nfc
+WORKDIR /app
 
 # ホスト側のファイルをコピー（必要であれば）
 COPY . .

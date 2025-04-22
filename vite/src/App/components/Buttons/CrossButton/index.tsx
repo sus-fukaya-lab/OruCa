@@ -8,7 +8,7 @@ const CrossButton: React.FC<IconButtonProps> = ({...props}) => {
 			aria-label={"Cancel edit"}
 			backgroundColor={"red.400"}
 			shadow={"md"}
-			size={"md"}
+			size={["2xs", null, "md"]}
 			_hover={{
 				transform: "scale(1.1)"
 			}}

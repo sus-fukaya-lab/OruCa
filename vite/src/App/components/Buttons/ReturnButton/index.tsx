@@ -21,7 +21,7 @@ const ReturnButton:React.FC<TReturnButton> = ({address})=>{
 			_hover={{
 				transform: 'rotate(360deg)',
 			}}
-			size={"xl"}
+			size={["md", null, "xl"]}
 			onClick={handleClick}
 		>
 			<BsArrowReturnLeft/>

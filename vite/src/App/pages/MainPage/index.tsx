@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react";
-import HeadBar from "@components/HeadBar/HeadBar";
-import SettingButton from "@components/SettingButton";
+import HeadBar from "@components/HeadBar";
+import SettingButton from "@components/Buttons/SettingButton";
 import DataTable from "@pages/MainPage/DataTable";
 
 function MainPage() {
@@ -12,9 +12,8 @@ function MainPage() {
 				<Box
 					w={"100%"}
 					h={"100%"}
-					p={4}
 					px={"5%"}
-					pt={"10%"}
+					py={["10%", null, "5%"]}
 				>
 					<DataTable />
 				</Box>

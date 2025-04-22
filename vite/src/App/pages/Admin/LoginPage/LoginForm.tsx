@@ -3,156 +3,205 @@ import { TWsMessage } from "@Apps/app.env";
 import { Box, Button, Card, Field, Fieldset, Input } from "@chakra-ui/react";
 import { useWebSocket } from '@contexts/WebSocketContext';
 import { Toaster, toaster } from "@snippets/toaster";
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-export const LoginForm = () => {
-	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
+const LoginForm = () => {
+	// 状態管理
+	const [formData, setFormData] = useState({
+		username: "",
+		password: ""
+	});
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	// ルーティングとWebSocket
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { socket } = useWebSocket();
-	
 
-	useEffect(() => {
-		if (socket && socket.readyState === WebSocket.OPEN) {
-			socket.onmessage = (event) => {
-				const d: TWsMessage = JSON.parse(event.data);
-				if (d.type === "user/auth" && d.payload.content) {
-					const { result } = d.payload;
-					if (result) {
-						navigate("/admin/settings", { state: { loginStatus: true } });
-					} else {
-						toaster.create({
-							title: "ログイン失敗",
-							description: "ユーザー名またはパスワードが間違っています。",
-							type: "error",
-							duration: 3000,
-						});
-					}
-				}
-			};
-
-		}
-	}, [socket]);
-
-	useEffect(() => {
-		if (location.state?.loginStatus === false) {
-			Promise.resolve().then(() => {
-				toaster.create({
-					title: "ログイン失敗",
-					description: "アクセスに失敗しました",
-					type: "error",
-					duration: 3000,
-				});
-			});
-			// これがないと戻るときにも表示される可能性があるため state を消す
-			window.history.replaceState({}, document.title);
-		}
-	}, [location.state]);
-	
-	const handleSubmit = () => {
-		if (!socket) {
-			toaster.create({
-				title: "ログイン失敗",
-				description: "認証サーバーとの通信が出来ませんでした",
-				type: "error",
-				duration: 3000,
-			});
-			return;
-		}
-		const jsonMsg: TWsMessage = {
-			type: "user/auth",
-			payload: {
-				result: true,
-				content: [{ student_ID: username, password: password }],
-				message: "認証"
-			}
-		}
-		socket.send(JSON.stringify(jsonMsg));
-		window.history.replaceState({}, document.title);
-	};
-
+	// 入力フィールドへの参照
 	const nameInputRef = useRef<HTMLInputElement>(null);
 	const passInputRef = useRef<HTMLInputElement>(null);
 	const submitButtonRef = useRef<HTMLButtonElement>(null);
 
+	// WebSocketメッセージのハンドリング
+	useEffect(() => {
+		if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+		const handleMessage = (event: MessageEvent) => {
+			const data: TWsMessage = JSON.parse(event.data);
+
+			if (data.type === "user/auth" && data.payload.content) {
+				setIsSubmitting(false);
+
+				if (data.payload.result) {
+					navigate("/admin/settings", { state: { loginStatus: true } });
+				} else {
+					showErrorToast("ログイン失敗", "ユーザー名またはパスワードが間違っています。");
+				}
+			}
+		};
+
+		socket.addEventListener("message", handleMessage);
+
+		return () => {
+			socket.removeEventListener("message", handleMessage);
+		};
+	}, [socket, navigate]);
+
+	// ルーティング状態によるエラー表示
+	useEffect(() => {
+		if (location.state?.loginStatus === false) {
+			showErrorToast("ログイン失敗", "アクセスに失敗しました");
+			// 戻るときにも表示されるのを防止するためstateをクリア
+			window.history.replaceState({}, document.title);
+		}
+	}, [location.state]);
+
+	// 初期フォーカス設定
 	useEffect(() => {
 		nameInputRef.current?.focus();
 	}, []);
 
+	// 入力ハンドラ
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		setFormData(prev => ({ ...prev, [name]: value }));
+	};
+
+	// キーボードイベントハンドラ
+	const handleKeyDown = (e: React.KeyboardEvent, nextField: React.RefObject<HTMLElement|null>) => {
+		if (e.key === "Enter" && nextField.current) {
+			e.preventDefault();
+			nextField.current.focus();
+		}
+	};
+
+	// ログイン処理
+	const handleSubmit = (e?: FormEvent) => {
+		if (e) e.preventDefault();
+
+		if (isSubmitting) return;
+		setIsSubmitting(true);
+
+		if (!socket || socket.readyState !== WebSocket.OPEN) {
+			showErrorToast("ログイン失敗", "認証サーバーとの通信が出来ませんでした");
+			setIsSubmitting(false);
+			return;
+		}
+
+		const { username, password } = formData;
+		if (!username || !password) {
+			showErrorToast("入力エラー", "ユーザー名とパスワードを入力してください");
+			setIsSubmitting(false);
+			return;
+		}
+
+		const authMessage: TWsMessage = {
+			type: "user/auth",
+			payload: {
+				result: true,
+				content: [{ student_ID: username, password }],
+				message: "認証"
+			}
+		};
+
+		socket.send(JSON.stringify(authMessage));
+		window.history.replaceState({}, document.title);
+	};
+
+	// エラーメッセージ表示用ヘルパー関数
+	const showErrorToast = (title: string, description: string) => {
+		toaster.create({
+			title,
+			description,
+			type: "error",
+			duration: 1500,
+		});
+	};
+
 	return (
 		<>
 			<Box
-				w={"100%"}
-				h={"80%"}
-				display={"flex"}
-				alignItems={"center"}
-				justifyContent={"center"}
+				w="100%"
+				h="100%"
+				display="flex"
+				alignItems="center"
+				justifyContent="center"
 			>
 				<Card.Root
-					w={"50%"}
-					p={10}
+					w="fit-content"
+					p={[2, null, 10]}
 					borderWidth={2}
-					borderColor={"default/20"}
-					shadow={"md"}
+					borderColor="default/20"
+					shadow="md"
 				>
 					<Card.Body>
-						<Fieldset.Root gap={7} size={"lg"}>
-							<Fieldset.Legend
-								fontSize={"2xl"} color={"default"} fontWeight={"semibold"} pb={2}
-							>
-								管理者ログイン
-							</Fieldset.Legend>
-							<Fieldset.Content gap={12} color={"default"}>
-								<Field.Root>
-									<Field.Label fontSize={"lg"}>ユーザー名</Field.Label>
-									<Input
-										name="name"
-										type="text"
-										fontSize={"lg"}
-										value={username}
-										onChange={(e) => setUsername(e.target.value)} 
-										onKeyDown={(e)=>{
-											if(e.key === "Enter"){
-												passInputRef.current?.focus();
-											}
-										}}
-										ref={nameInputRef}
+						<form onSubmit={handleSubmit}>
+							<Fieldset.Root gap={[3, null, 7]} size="lg">
+								<Fieldset.Legend
+									fontSize={["lg", null, "2xl"]}
+									color="default"
+									fontWeight="semibold"
+									pb={2}
+								>
+									管理者ログイン
+								</Fieldset.Legend>
+
+								<Fieldset.Content gap={[6, null, 12]} color="default">
+									<Field.Root>
+										<Field.Label fontSize={["sm", null, "lg"]}>ユーザー名</Field.Label>
+										<Input
+											name="username"
+											type="text"
+											fontSize={["sm", null, "lg"]}
+											size={["xs", null, "lg"]}
+											value={formData.username}
+											onChange={handleInputChange}
+											onKeyDown={(e) => handleKeyDown(e, passInputRef)}
+											ref={nameInputRef}
+											autoComplete="username"
+											disabled={isSubmitting}
 										/>
-								</Field.Root>
-								<Field.Root>
-									<Field.Label fontSize={"lg"}>パスワード</Field.Label>
-									<Input
-										type="password"
-										name="password"
-										fontSize={"lg"}
-										value={password}
-										onChange={(e) => setPassword(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												submitButtonRef.current?.focus();
-											}
-										}}
-										ref={passInputRef}
+									</Field.Root>
+
+									<Field.Root>
+										<Field.Label fontSize={["sm", null, "lg"]}>パスワード</Field.Label>
+										<Input
+											name="password"
+											type="password"
+											fontSize={["sm", null, "lg"]}
+											size={["xs", null, "lg"]}
+											value={formData.password}
+											onChange={handleInputChange}
+											onKeyDown={(e) => handleKeyDown(e, submitButtonRef)}
+											ref={passInputRef}
+											autoComplete="current-password"
+											disabled={isSubmitting}
 										/>
-								</Field.Root>
-							</Fieldset.Content>
-							<Button
-								transition={"backgrounds"}
-								transitionDuration="fast"
-								bgColor={{
-									base: "default",
-									_hover: "rgb(83, 63, 194)"
-								}}
-								py={5}
-								fontSize={"lg"}
-								onClick={handleSubmit}
-								ref={submitButtonRef}
-							>
-								ログイン
-							</Button>
-						</Fieldset.Root>
+									</Field.Root>
+								</Fieldset.Content>
+
+								<Button
+									type="submit"
+									transition="backgrounds"
+									transitionDuration="fast"
+									bgColor={{
+										base: "default",
+										_hover: "rgb(83, 63, 194)"
+									}}
+									py={5}
+									fontSize={["mg", null, "lg"]}
+									size={["md", null, "lg"]}
+									onClick={handleSubmit}
+									ref={submitButtonRef}
+									disabled={isSubmitting}
+									loadingText="認証中..."
+								>
+									ログイン
+								</Button>
+							</Fieldset.Root>
+						</form>
 					</Card.Body>
 				</Card.Root>
 			</Box>

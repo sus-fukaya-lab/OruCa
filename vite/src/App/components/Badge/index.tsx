@@ -1,5 +1,5 @@
+import { Status, Text } from "@chakra-ui/react";
 import React from 'react';
-import {Status,Text} from "@chakra-ui/react";
 
 
 interface BadgeProps {
@@ -17,18 +17,19 @@ const Badge:React.FC<BadgeProps> = ({isTrue,text}) => {
 	return (
 		<Status.Root
 			colorPalette={color} 
-			size={"lg"}
+			size={["sm", null, "lg"]}
 			color={`${color}.700`}
-			// color={`blackAlpha.700`}
 			fontWeight={"bold"}
 			backgroundColor={`${color}.100`}
-			fontSize={"lg"}
+			fontSize={["xs", null, "lg"]}
 			border={`1px solid ${color}`}
-			padding={"8px 15px"}
-			borderRadius={10}
+			px={[1, null, 2]}
+			py={[1, null, 2]}
+			borderRadius={8}
+			gap={5}
 			>
 			<Status.Indicator />
-			<Text ml={3}>{message}</Text>
+			<Text>{message}</Text>
 		</Status.Root>
 	)
 }

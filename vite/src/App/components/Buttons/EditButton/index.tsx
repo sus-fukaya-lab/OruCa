@@ -7,7 +7,7 @@ const EditButton:React.FC<IconButtonProps> = ({...props})=>{
 		<IconButton
 			aria-label={"Enter edit"}
 			backgroundColor={"none/20"}
-			size={"md"}
+			size={["2xs", null, "md"]}
 			variant={"plain"}
 			borderColor={"blackAlpha.300"}
 			_hover={{

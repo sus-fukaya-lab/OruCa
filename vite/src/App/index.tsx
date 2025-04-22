@@ -9,7 +9,7 @@ import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 function App() {
   return (
-    <Box w={"100%"} h={"100%"} bgColor={"white"}>
+    <Box bgColor={"white"}>
       <LightMode>
         <WebSocketProvider>
           <Router>
