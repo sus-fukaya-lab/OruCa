@@ -1,9 +1,9 @@
+// MessageHandler.ts
 import { createHash } from "crypto";
-import express from "express";
 import mysql from "mysql2/promise";
 import WebSocket from "ws";
-import { DBresult, TWsMessage, TWsProcessType } from "../config";
-import { hasProps, sendWsMessage } from '../utils';
+import { DBresult, TWsMessage, TWsProcessType } from "../../config";
+import { hasProps, sendWsMessage } from '../../utils';
 
 // HandlerFunction型定義
 type HandlerFunction = (ws: WebSocket.WebSocket, data: TWsMessage) => void;
@@ -11,15 +11,13 @@ type HandlerFunction = (ws: WebSocket.WebSocket, data: TWsMessage) => void;
 export class MessageHandler {
 	private wss: WebSocket.Server;
 	private connectionPool: mysql.PoolConnection;
-	private expressServer : express.Express;
-	
-	constructor(es:express.Express,wss: WebSocket.Server, connection:mysql.PoolConnection) {
-		this.expressServer = es;
+
+	constructor(wss: WebSocket.Server, connection: mysql.PoolConnection) {
 		this.wss = wss;
-		this.connectionPool = connection;  // プールを作成
+		this.connectionPool = connection;
 	}
 
-	// 非同期でログを取得し、クライアントに送信
+	// 非同期でログを取得
 	public async fetchLogs() {
 		try {
 			const query = "SELECT * FROM student_log_view;";
@@ -34,7 +32,7 @@ export class MessageHandler {
 	// トークンを取得する非同期メソッド
 	private async fetchToken(student_ID: string) {
 		try {
-			const query = "CALL get_student_token(?);"
+			const query = "CALL get_student_token(?);";
 			const [packet] = await this.connectionPool.execute<DBresult["default"]>(query, [student_ID]);
 			const [results] = packet;
 			return results;
@@ -44,31 +42,30 @@ export class MessageHandler {
 		}
 	}
 
-	private async updateName(student_ID:string,student_Name:string){
+	private async updateName(student_ID: string, student_Name: string) {
 		try {
-			const query = "CALL update_student_name(?,?);"
-			await this.connectionPool.execute<DBresult["default"]>(query, [student_ID,student_Name]);
+			const query = "CALL update_student_name(?,?);";
+			await this.connectionPool.execute<DBresult["default"]>(query, [student_ID, student_Name]);
 		} catch (err) {
 			console.error("データ更新エラー:", err);
 			throw err;
 		}
 	}
 
-	private async deleteUser(student_ID:string){
+	private async deleteUser(student_ID: string) {
 		try {
-			const query = `DELETE FROM users WHERE student_ID = ?;`
+			const query = `DELETE FROM users WHERE student_ID = ?;`;
 			await this.connectionPool.execute<DBresult["default"]>(query, [student_ID]);
 		} catch (err) {
 			console.error("データ削除エラー:", err);
 			throw err;
 		}
 	}
-	
 
 	// データ更新のブロードキャスト
 	public async broadcastData() {
 		try {
-			const logs = await this.fetchLogs();  // 非同期でログを取得
+			const logs = await this.fetchLogs();
 			this.wss.clients.forEach((client) => {
 				if (client.readyState === WebSocket.OPEN) {
 					const jsonMsg: TWsMessage = {
@@ -89,7 +86,7 @@ export class MessageHandler {
 
 	// 各メッセージの処理
 	public handlers: Record<TWsProcessType, HandlerFunction> = {
-		"ack":async (ws,data)=>{
+		"ack": async (ws, data) => {
 			const jsonMsg: TWsMessage = {
 				type: "ack",
 				payload: {
@@ -100,17 +97,18 @@ export class MessageHandler {
 			};
 			try {
 				jsonMsg.payload.result = true;
-				jsonMsg.payload.content = [{status:true}];
+				jsonMsg.payload.content = [{ status: true }];
 				sendWsMessage(ws, jsonMsg);
 			} catch (error) {
 				jsonMsg.payload.result = false;
 				jsonMsg.payload.content = [{ status: false }];
-				sendWsMessage(ws,jsonMsg)
+				sendWsMessage(ws, jsonMsg);
 			}
 		},
+
 		"log/fetch": async (ws, data) => {
 			try {
-				const logs = await this.fetchLogs();  // 非同期でログを取得
+				const logs = await this.fetchLogs();
 				const jsonMsg: TWsMessage = {
 					type: "log/fetch",
 					payload: {
@@ -124,10 +122,12 @@ export class MessageHandler {
 				console.error("ログ取得エラー:", error);
 			}
 		},
+
 		"log/write": async (ws, data) => {
-			// http側で受けてるので使ってない
+			// HTTP側で処理するので空実装
 		},
-		"user/fetchToken": async (ws,data)=>{
+
+		"user/fetchToken": async (ws, data) => {
 			const content = data.payload?.content;
 			const jsonMsg: TWsMessage = {
 				type: "user/fetchToken",
@@ -138,38 +138,39 @@ export class MessageHandler {
 				},
 			};
 			try {
-				if (!hasProps<{ student_ID: string }>(content, ["student_ID"])){
+				if (!hasProps<{ student_ID: string }>(content, ["student_ID"])) {
 					jsonMsg.payload = {
-						result:false,
-						content:[],
-						message:"student_IDがありません"
-					}
+						result: false,
+						content: [],
+						message: "student_IDがありません"
+					};
 					sendWsMessage(ws, jsonMsg);
 					return;
-				};
+				}
 
 				const result = await this.fetchToken(content.student_ID);
-				
-				if (!hasProps<{ student_token: string }>(result, ["student_token"])){
+
+				if (!hasProps<{ student_token: string }>(result, ["student_token"])) {
 					jsonMsg.payload = {
 						result: false,
 						content: [],
 						message: "student_tokenがありません"
-					}
+					};
 					sendWsMessage(ws, jsonMsg);
 					return;
-				};
+				}
 
 				jsonMsg.payload = {
 					result: true,
 					content: [result],
 					message: "認証トークンのfetch"
-				}
-				sendWsMessage(ws,jsonMsg);
+				};
+				sendWsMessage(ws, jsonMsg);
 			} catch (err) {
 				console.error("トークンフェッチエラー:", err);
 			}
 		},
+
 		"user/auth": async (ws, data) => {
 			const [content] = data.payload?.content;
 			const jsonMsg: TWsMessage = {
@@ -183,7 +184,7 @@ export class MessageHandler {
 
 			try {
 				if (!hasProps<{ student_ID: string; password: string }>(content, ["student_ID", "password"])) {
-					jsonMsg.payload.message="student_ID または password がありません";
+					jsonMsg.payload.message = "student_ID または password がありません";
 					sendWsMessage(ws, jsonMsg);
 					return;
 				}
@@ -191,7 +192,7 @@ export class MessageHandler {
 				const [result] = await this.fetchToken(content.student_ID);
 
 				if (!hasProps<{ student_token: string }>(result, ["student_token"])) {
-					jsonMsg.payload.message="student_tokenが取得できませんでした";
+					jsonMsg.payload.message = "student_tokenが取得できませんでした";
 					sendWsMessage(ws, jsonMsg);
 					return;
 				}
@@ -225,7 +226,8 @@ export class MessageHandler {
 				sendWsMessage(ws, jsonMsg);
 			}
 		},
-		"user/update_name":async (ws,data)=>{
+
+		"user/update_name": async (ws, data) => {
 			const [content] = data.payload?.content;
 			const jsonMsg: TWsMessage = {
 				type: "user/update_name",
@@ -245,15 +247,18 @@ export class MessageHandler {
 					sendWsMessage(ws, jsonMsg);
 					return;
 				}
-				const {student_ID,student_Name} = content;
-				
-				await this.updateName(student_ID,student_Name);
+				const { student_ID, student_Name } = content;
+
+				await this.updateName(student_ID, student_Name);
 				jsonMsg.payload = {
 					result: true,
 					content: [],
 					message: `更新完了（${student_ID}：${student_Name}）`,
 				};
 				sendWsMessage(ws, jsonMsg);
+
+				// 更新後にデータを全クライアントに配信
+				await this.broadcastData();
 			} catch (err) {
 				console.error("更新エラー:", err);
 				jsonMsg.payload = {
@@ -264,7 +269,8 @@ export class MessageHandler {
 				sendWsMessage(ws, jsonMsg);
 			}
 		},
-		"user/delete":async (ws,data) => {
+
+		"user/delete": async (ws, data) => {
 			const [content] = data.payload?.content;
 			const jsonMsg: TWsMessage = {
 				type: "user/delete",
@@ -275,7 +281,7 @@ export class MessageHandler {
 				},
 			};
 			try {
-				if (!hasProps<{ student_ID: string}>(content, ["student_ID"])) {
+				if (!hasProps<{ student_ID: string }>(content, ["student_ID"])) {
 					jsonMsg.payload = {
 						result: false,
 						content: [],
@@ -284,7 +290,7 @@ export class MessageHandler {
 					sendWsMessage(ws, jsonMsg);
 					return;
 				}
-				const { student_ID} = content;
+				const { student_ID } = content;
 
 				await this.deleteUser(student_ID);
 
@@ -294,6 +300,9 @@ export class MessageHandler {
 					message: `削除完了（${student_ID}）`,
 				};
 				sendWsMessage(ws, jsonMsg);
+
+				// 削除後にデータを全クライアントに配信
+				await this.broadcastData();
 			} catch (err) {
 				console.error("削除エラー:", err);
 				jsonMsg.payload = {
@@ -303,10 +312,10 @@ export class MessageHandler {
 				};
 				sendWsMessage(ws, jsonMsg);
 			}
-
 		},
-		"slackBot/post":async (ws,data) => {
-			// 何もしない
-		}	
+
+		"slackBot/post": async (ws, data) => {
+			// SlackServiceに移動したので空実装
+		}
 	};
 }

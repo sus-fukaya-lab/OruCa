@@ -1,7 +1,7 @@
 import express from "express";
-import { SERVER_CONFIG, DB_CONFIG } from "./config";
-import { DatabaseHandler } from "./Handlers/DataBaseHandler"; // DatabaseHandlerクラスのインポート
-import { WebSocketServerHandler } from "./Handlers/WebSocketServerHandler"; // WebSocketServerHandlerクラスのインポート
+import { DB_CONFIG, SERVER_CONFIG } from "./config";
+import { DatabaseHandler } from "./infrastructure/database/DataBaseHandler"; // DatabaseHandlerクラスのインポート
+import { WebSocketServerHandler } from "./infrastructure/websocket/WebSocketServerHandler"; // WebSocketServerHandlerクラスのインポート
 
 const app = express();
 const port = SERVER_CONFIG.port;
