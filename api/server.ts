@@ -1,5 +1,5 @@
 import { DatabaseHandler } from "@infra/database/DataBaseHandler"; // DatabaseHandlerクラスのインポート
-import { WebSocketServerHandler } from "@infra/server/websocket/WebSocketHandler"; // WebSocketServerHandlerクラスのインポート
+import { ServerHandler } from "@infra/server/ServerHandler"; // WebSocketServerHandlerクラスのインポート
 import { DB_CONFIG, SERVER_CONFIG } from "@src/config";
 import express from "express";
 
@@ -23,8 +23,8 @@ const initializeDatabase = async () => {
 // WebSocketサーバーの作成
 const initializeWebSocket = async() => {
 	const connection = await databaseHandler.getConnection();
-	const wssh = new WebSocketServerHandler(app,connection);
-	return wssh.getServer();
+	const sh = new ServerHandler(app,connection);
+	return sh.getServer();
 };
 
 // サーバーを立ち上げる
