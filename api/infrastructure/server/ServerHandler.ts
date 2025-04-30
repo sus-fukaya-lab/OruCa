@@ -30,7 +30,7 @@ export class ServerHandler {
 		);
 	}
 
-	public getServer(): http.Server {
+	public getServer():http.Server {
 		return this.httpServer;
 	}
 }

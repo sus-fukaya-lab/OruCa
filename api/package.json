@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "ts-node-dev --respawn tsconfig-paths/register server.ts"
+    "start": "ts-node-dev --respawn -r tsconfig-paths/register server.ts"
   },
   "dependencies": {
     "@types/dotenv": "^8.2.3", 
