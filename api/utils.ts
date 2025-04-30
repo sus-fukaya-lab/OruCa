@@ -1,5 +1,5 @@
+import { TWsMessage } from "@src/config";
 import WebSocket from "ws";
-import { TWsMessage } from "./config";
 
 export const hasProps = <T extends object>(obj: any, props: (keyof T)[]): obj is T => {
 	if (!obj) return false;

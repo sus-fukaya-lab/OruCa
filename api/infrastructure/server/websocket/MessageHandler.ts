@@ -1,9 +1,9 @@
 // MessageHandler.ts
+import { DBresult, TWsMessage, TWsProcessType } from "@src/config";
+import { hasProps, sendWsMessage } from '@src/utils';
 import { createHash } from "crypto";
 import mysql from "mysql2/promise";
 import WebSocket from "ws";
-import { DBresult, TWsMessage, TWsProcessType } from "../../config";
-import { hasProps, sendWsMessage } from '../../utils';
 
 // HandlerFunction型定義
 type HandlerFunction = (ws: WebSocket.WebSocket, data: TWsMessage) => void;

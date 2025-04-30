@@ -1,9 +1,9 @@
 // HttpHandler.ts
+import { SlackService } from "@infra/integrations/SlackServive";
+import { DBresult, TWsMessage } from "@src/config";
+import { hasProps } from "@src/utils";
 import express from "express";
 import mysql from "mysql2/promise";
-import { DBresult, TWsMessage } from "../../config";
-import { hasProps } from "../../utils";
-import { SlackService } from "./SlackService";
 
 export class HttpHandler {
 	private connectionPool: mysql.PoolConnection;

@@ -1,9 +1,9 @@
 // SlackService.ts
-import { SLACK_BOT_TOKEN, SLACK_CHANNEL_ID } from "../../config";
+import { SLACK_BOT_TOKEN, SLACK_CHANNEL_ID } from "@src/config";
 
 export class SlackService {
 	// Slackにメッセージを投稿するメソッド
-	public static async postMessage(message: string): Promise<void> {
+	public async postMessage(message: string): Promise<void> {
 		try {
 			const response = await fetch('https://slack.com/api/chat.postMessage', {
 				method: 'POST',

@@ -1,37 +1,22 @@
-// WebSocketServerHandler.ts
-import express from 'express';
+// WebSocketHandler.ts
+import { MessageHandler } from "@infra/server/websocket/MessageHandler";
+import { TWsMessage } from "@src/config";
+import { sendWsMessage } from "@src/utils";
 import * as http from "http";
 import mysql from "mysql2/promise";
 import * as WebSocket from "ws";
-import { TWsMessage } from "../../config";
-import { sendWsMessage } from "../../utils";
-import { HttpHandler } from "../http/HttpHandler";
-import { MessageHandler } from "./MessageHandler";
 
-export class WebSocketServerHandler {
-	private httpServer: http.Server;
+export class WebSocketHandler {
 	private wss: WebSocket.WebSocketServer;
 	private connectionPool: mysql.PoolConnection;
 	private messageHandler: MessageHandler;
-	private httpHandler: HttpHandler;
 
-	constructor(app: express.Express, connection: mysql.PoolConnection) {
-		// Expressサーバー作成
-		const server = http.createServer(app);
-
-		this.httpServer = server;
-		this.wss = new WebSocket.WebSocketServer({ server });
+	constructor(httpServer: http.Server, connection: mysql.PoolConnection) {
+		this.wss = new WebSocket.WebSocketServer({ server: httpServer });
 		this.connectionPool = connection;
 
 		// MessageHandlerのインスタンスを作成
 		this.messageHandler = new MessageHandler(this.wss, this.connectionPool);
-
-		// HTTPハンドラを初期化
-		this.httpHandler = new HttpHandler(
-			app,
-			this.connectionPool,
-			this.messageHandler.broadcastData.bind(this.messageHandler)
-		);
 
 		this.initializeWebSocketServer();
 	}
@@ -73,7 +58,7 @@ export class WebSocketServerHandler {
 		});
 	}
 
-	public getServer(): http.Server {
-		return this.httpServer;
+	public broadcastData(): Promise<void> {
+		return this.messageHandler.broadcastData();
 	}
 }
