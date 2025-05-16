@@ -7,30 +7,31 @@ services:
     container_name: ORuCa_vite
     volumes:
       - ./vite:/app:rw
-    ports:
+    ports: # 開発時に直接アクセスしたい場合はコメント解除
       - "4000:4000"
     command: ["tail","-f","/dev/null"]
     networks:
-      - backend
+      - oruca_network 
     profiles:
       - "dev"
 
   # 本番用 Nginx
   web:
-    build: 
+    build:
       context: web
     container_name: ORuCa_web
-    ports:
-      - "4040:80"
+    # ports: # リバースプロキシ経由のためコメントアウト
+      # - "4040:80"
     volumes:
       - ./vite/dist:/usr/share/nginx/html:ro
     depends_on:
-      - api
+      - api # apiがmysqlに依存するため、これでmysql起動後になる
     networks:
-      - backend
+      - oruca_network
     profiles:
       - "prod"
 
+  # mysql
   mysql:
     build:
       context: mysql
@@ -43,10 +44,10 @@ services:
     env_file:
       - .env
     volumes:
-      - ./mysql/data/init.sql:/docker-entrypoint-initdb.d/init.sql  # SQLファイルをコンテナ内にマウント
-      - mysql_data:/var/lib/mysql  # MySQLのデータを永続化
-    ports:
-      - "3306:3306"
+      - ./mysql/data/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    # ports: # 外部から直接DBにアクセスしない場合はコメントアウト推奨
+      # - "3306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -54,7 +55,7 @@ services:
       start_period: 10s
       timeout: 10s
     networks:
-      - backend
+      - oruca_network
 
   api:
     build:
@@ -63,41 +64,38 @@ services:
     container_name: ORuCa_api
     volumes:
       - ./api:/app:rw
-    env_file:
+    env_file: # DATABASE_URLは.envファイルまたはアプリケーションコード内で設定される想定
       - .env
-    ports:
-      - "3000:3000"
     command: ["yarn","start"]
     depends_on:
       mysql:
         condition: service_healthy
     networks:
-      - backend
+      - oruca_network
 
   nfc:
     container_name: ORuCa_nfc
     build:
-      context: nfc  # Dockerfileが存在するディレクトリ
-    init: true # PID 1 問題を解決するらしい
+      context: nfc
+    init: true
     volumes:
       - ./nfc:/app:rw
-    ports:
-      - "8000:8000"  # コンテナ内のポート8000をホストのポート8000にバインド
     environment:
-      - TZ=Asia/Tokyo  # 必要に応じて環境変数の追加
+      - TZ=Asia/Tokyo
     command: ["python","main.py"]
     depends_on:
-      mysql:
+      mysql: # nfcサービスもmysqlに依存する場合
         condition: service_healthy
     devices:
-      - "/dev/bus/usb:/dev/bus/usb"  # USBデバイスをコンテナに渡す
+      - "/dev/bus/usb:/dev/bus/usb"
     networks:
-      - backend
+      - oruca_network
 
 
 networks:
-  backend:
-    driver: bridge
+  oruca_network : # リバースプロキシのdocker-compose.ymlで定義・作成されるネットワークを参照
+    external: true
+    name: oruca_network # リバースプロキシ側で指定した固定名と合わせる
 
 volumes:
-  mysql_data:
+  mysql_data: {}
