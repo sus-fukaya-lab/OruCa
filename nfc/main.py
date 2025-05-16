@@ -33,6 +33,8 @@ def get_student_ID(tag: Tag):
     match role_classification:
         case "01" | "02":  # student
             return student_id_bytearray.decode("utf-8")[2:9]
+        case "11":  # faculty
+            return student_id_bytearray.decode("utf-8")[2:9]
         case _:  # unknown
             raise Exception(f"Unknown role classification: {role_classification}")
 
