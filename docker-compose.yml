@@ -4,7 +4,7 @@ services:
     build:
       context: ./vite
       dockerfile: Dockerfile
-    container_name: ORuCa_vite
+    container_name: OruCa_vite
     volumes:
       - ./vite:/app:rw
     ports: # 開発時に直接アクセスしたい場合はコメント解除
@@ -19,7 +19,7 @@ services:
   web:
     build:
       context: web
-    container_name: ORuCa_web
+    container_name: OruCa_web
     # ports: # リバースプロキシ経由のためコメントアウト
       # - "4040:80"
     volumes:
@@ -40,7 +40,7 @@ services:
         MYSQL_USER : ${MYSQL_USER}
         MYSQL_PASSWORD : ${MYSQL_PASSWORD}
         MYSQL_ROOT_PASSWORD : ${MYSQL_ROOT_PASSWORD}
-    container_name: ORuCa_mysql
+    container_name: OruCa_mysql
     env_file:
       - .env
     volumes:
@@ -61,11 +61,11 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: ORuCa_api
+    container_name: OruCa_api
     volumes:
       - ./api:/app:rw
-    ports:
-      - "3000:3000"
+    expose: # ← オプション: 内部的に3000番ポートを公開していることを明示
+      - "3000"
     env_file: # DATABASE_URLは.envファイルまたはアプリケーションコード内で設定される想定
       - .env
     command: ["yarn","start"]
@@ -76,7 +76,7 @@ services:
       - oruca_network
 
   nfc:
-    container_name: ORuCa_nfc
+    container_name: OruCa_nfc
     build:
       context: nfc
     init: true
