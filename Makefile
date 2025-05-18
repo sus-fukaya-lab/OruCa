@@ -98,7 +98,7 @@ init:
 	@echo "➡️ STEP 1: Building Docker images for all services (dev & prod profiles)..."
 	# 'dev'プロファイルの'vite'サービスイメージと、'prod'プロファイルの'web'サービスイメージ、
 	# 及びそれらが依存する共通サービス(api, mysql, nfc)のイメージをビルドします。
-	docker compose --profile dev --profile prod build
+	docker compose --profile dev build
 	@echo "✅ Docker images built."
 	@echo "---------------------------------------------------------------------"
 
@@ -116,7 +116,7 @@ init:
 	# 既存の `up-d` ターゲットを `prod` プロファイルで呼び出し、全サービスを起動
 	# `up-d` 内の `--build` フラグにより、必要に応じてサービスイメージも再ビルドされます。
 	# `web`サービスは新しい `./vite/dist` の内容をマウントして起動します。
-	$(MAKE) up-d p="prod"
+	$(MAKE) up-d p="prod" t="web"
 	@echo "---------------------------------------------------------------------"
 	@echo "🎉 OruCa Production Environment deployment complete!"
 	# ACCESSIBLE_HOST 変数を使用

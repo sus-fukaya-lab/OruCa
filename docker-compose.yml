@@ -64,6 +64,8 @@ services:
     container_name: ORuCa_api
     volumes:
       - ./api:/app:rw
+    ports:
+      - "3000:3000"
     env_file: # DATABASE_URLは.envファイルまたはアプリケーションコード内で設定される想定
       - .env
     command: ["yarn","start"]
