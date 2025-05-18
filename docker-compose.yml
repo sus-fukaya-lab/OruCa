@@ -64,8 +64,6 @@ services:
     container_name: OruCa_api
     volumes:
       - ./api:/app:rw
-    expose: # ← オプション: 内部的に3000番ポートを公開していることを明示
-      - "3000"
     env_file: # DATABASE_URLは.envファイルまたはアプリケーションコード内で設定される想定
       - .env
     command: ["yarn","start"]
