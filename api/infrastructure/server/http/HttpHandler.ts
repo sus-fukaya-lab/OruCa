@@ -79,6 +79,9 @@ export class HttpHandler {
 				}
 			}
 		});
+		app.get("/echo",express.json(),async (req:express.Request,res:express.Response)=>{
+			res.status(200).json("http(api) is connected\n");
+		});
 	}
 
 	private async notifySlackBot(student_ID: string): Promise<void> {
