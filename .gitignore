@@ -136,3 +136,6 @@ dist
 .env
 
 *test.ts
+
+
+mysql/**/backup.sql
