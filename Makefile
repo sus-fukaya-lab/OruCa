@@ -150,30 +150,45 @@ init-prod:
 	@echo "---------------------------------------------------------------------"
 
 # --- Database Backup & Restore ---
+# 現在の日時をYYYYMMDD-HHMMSS 形式で取得 (バックアップディレクトリ名に使用)
 TIMESTAMP := $(shell date +%Y%m%d-%H%M%S)
+# バックアップファイルを保存するルートディレクトリ
 BACKUP_ROOT_DIR := mysql/backups
+# 今回のバックアップを保存する具体的なディレクトリパス
 CURRENT_BACKUP_DIR := $(BACKUP_ROOT_DIR)/$(TIMESTAMP)
 
 save-backup:
 	@echo "💾 Saving database backup..."
+	# バックアップディレクトリが存在しない場合は作成 (-p オプションで親ディレクトリも必要に応じて作成)
 	mkdir -p $(CURRENT_BACKUP_DIR)
 	@echo "   Backup directory: $(CURRENT_BACKUP_DIR)"
-	# MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE は .env ファイル経由でコンテナに設定されている前提
+	# mysqlコンテナ内でmysqldumpコマンドを実行し、データベースの内容をSQLファイルとして出力
+	# -T オプション: pseudo-TTYを割り当てない (スクリプトからの実行に適している)
+	# sh -c '...' : コンテナ内でシェルコマンドを実行
+	# --no-tablespaces : MySQL 8.0.21以降でmysqldump使用時にPROCESS権限がない場合に必要となることがあるオプション
+	# u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE : .envファイルから読み込まれた環境変数をシェル内で展開して使用
+	# 出力結果をホスト側の $(CURRENT_BACKUP_DIR)/backup.sql ファイルにリダイレクト
 	docker compose exec -T mysql sh -c 'mysqldump --no-tablespaces -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE' > $(CURRENT_BACKUP_DIR)/backup.sql
 	@echo "✅ Database backup saved to $(CURRENT_BACKUP_DIR)/backup.sql"
 
 attach-backup:
+	# backup_name 引数が指定されているかチェック
 	@if [ -z "$(backup_name)" ]; then \
 		echo "❌ Error: backup_name argument is required. Example: make attach-backup backup_name=YYYYMMDD-HHMMSS"; \
 		exit 1; \
 	fi
+	# リストア対象のバックアップファイルのフルパスを構築
 	@BACKUP_FILE_PATH="$(BACKUP_ROOT_DIR)/$(backup_name)/backup.sql"; \
+	# バックアップファイルが存在するかチェック
 	if [ ! -f "$$BACKUP_FILE_PATH" ]; then \
 		echo "❌ Error: Backup file $$BACKUP_FILE_PATH not found."; \
 		exit 1; \
 	fi
 	@echo "🔄 Restoring database from $$BACKUP_FILE_PATH..."
-	# MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE は .env ファイル経由でコンテナに設定されている前提
+	# バックアップファイルの内容をmysqlコンテナ内のmysqlコマンドにパイプで渡し、データベースにインポート
+	# cat $$BACKUP_FILE_PATH : バックアップファイルの内容を標準出力へ
+	# | : パイプ。左側のコマンドの標準出力を右側のコマンドの標準入力へ渡す
+	# docker compose exec -T mysql sh -c 'mysql ...' : mysqlコンテナ内でmysqlコマンドを実行
 	cat $$BACKUP_FILE_PATH | docker compose exec -T mysql sh -c 'mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE'
 	@echo "✅ Database restored from $$BACKUP_FILE_PATH."
 
