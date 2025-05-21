@@ -126,16 +126,12 @@ init-prod:
 	@echo "➡️ STEP 3: Starting all 'prod' profile services (web, api, mysql, nfc)..."
 	$(if $(port), \
 		@echo "   Publishing web service on port $(port)"; \
-		# port引数が指定されている場合、docker-compose.override.yml を一時的に作成してポートマッピングを設定
 		echo "services:" > docker-compose.override.yml; \
 		echo "  web:" >> docker-compose.override.yml; \
 		echo "    ports:" >> docker-compose.override.yml; \
 		echo "      - \"$(port):80\"" >> docker-compose.override.yml; \
-		# オーバーライドファイルを含めて本番プロファイルサービスを起動
 		docker compose --profile prod -f docker-compose.yml -f docker-compose.override.yml up --build -d; \
-		# 一時的なオーバーライドファイルを削除
 		rm -f docker-compose.override.yml, \
-		# port引数が指定されていない場合、ポートマッピングなしでサービスを起動
 		@echo "   Web service port not specified, starting without explicit host port mapping (access via reverse proxy or other setup)."; \
 		docker compose --profile prod up --build -d \
 	)
@@ -157,38 +153,35 @@ BACKUP_ROOT_DIR := mysql/backups
 # 今回のバックアップを保存する具体的なディレクトリパス
 CURRENT_BACKUP_DIR := $(BACKUP_ROOT_DIR)/$(TIMESTAMP)
 
+# mysqlコンテナ内でmysqldumpコマンドを実行し、データベースの内容をSQLファイルとして出力
+# -T オプション: pseudo-TTYを割り当てない (スクリプトからの実行に適している)
+# sh -c '...' : コンテナ内でシェルコマンドを実行
+# --no-tablespaces : MySQL 8.0.21以降でmysqldump使用時にPROCESS権限がない場合に必要となることがあるオプション
+# u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE : .envファイルから読み込まれた環境変数をシェル内で展開して使用
+# 出力結果をホスト側の $(CURRENT_BACKUP_DIR)/backup.sql ファイルにリダイレクト
 save-backup:
 	@echo "💾 Saving database backup..."
-	# バックアップディレクトリが存在しない場合は作成 (-p オプションで親ディレクトリも必要に応じて作成)
 	mkdir -p $(CURRENT_BACKUP_DIR)
 	@echo "   Backup directory: $(CURRENT_BACKUP_DIR)"
-	# mysqlコンテナ内でmysqldumpコマンドを実行し、データベースの内容をSQLファイルとして出力
-	# -T オプション: pseudo-TTYを割り当てない (スクリプトからの実行に適している)
-	# sh -c '...' : コンテナ内でシェルコマンドを実行
-	# --no-tablespaces : MySQL 8.0.21以降でmysqldump使用時にPROCESS権限がない場合に必要となることがあるオプション
-	# u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE : .envファイルから読み込まれた環境変数をシェル内で展開して使用
-	# 出力結果をホスト側の $(CURRENT_BACKUP_DIR)/backup.sql ファイルにリダイレクト
 	docker compose exec -T mysql sh -c 'mysqldump --no-tablespaces -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE' > $(CURRENT_BACKUP_DIR)/backup.sql
 	@echo "✅ Database backup saved to $(CURRENT_BACKUP_DIR)/backup.sql"
 
+
+# バックアップファイルの内容をmysqlコンテナ内のmysqlコマンドにパイプで渡し、データベースにインポート
+# cat $$BACKUP_FILE_PATH : バックアップファイルの内容を標準出力へ
+# | : パイプ。左側のコマンドの標準出力を右側のコマンドの標準入力へ渡す
+# docker compose exec -T mysql sh -c 'mysql ...' : mysqlコンテナ内でmysqlコマンドを実行
 attach-backup:
-	# backup_name 引数が指定されているかチェック
 	@if [ -z "$(backup_name)" ]; then \
 		echo "❌ Error: backup_name argument is required. Example: make attach-backup backup_name=YYYYMMDD-HHMMSS"; \
 		exit 1; \
 	fi
-	# リストア対象のバックアップファイルのフルパスを構築
 	@BACKUP_FILE_PATH="$(BACKUP_ROOT_DIR)/$(backup_name)/backup.sql"; \
-	# バックアップファイルが存在するかチェック
 	if [ ! -f "$$BACKUP_FILE_PATH" ]; then \
 		echo "❌ Error: Backup file $$BACKUP_FILE_PATH not found."; \
 		exit 1; \
 	fi
 	@echo "🔄 Restoring database from $$BACKUP_FILE_PATH..."
-	# バックアップファイルの内容をmysqlコンテナ内のmysqlコマンドにパイプで渡し、データベースにインポート
-	# cat $$BACKUP_FILE_PATH : バックアップファイルの内容を標準出力へ
-	# | : パイプ。左側のコマンドの標準出力を右側のコマンドの標準入力へ渡す
-	# docker compose exec -T mysql sh -c 'mysql ...' : mysqlコンテナ内でmysqlコマンドを実行
 	cat $$BACKUP_FILE_PATH | docker compose exec -T mysql sh -c 'mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE'
 	@echo "✅ Database restored from $$BACKUP_FILE_PATH."
 
