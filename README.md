@@ -93,19 +93,19 @@ OruCaは、FeliCaカードを利用して研究室のメンバーの在室状況
 | ------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `help`              | ヘルプメッセージを表示します。                                                                        |                                                                          |
 | `init-dev`          | 開発用環境を初期化し、viteコンテナ（開発サーバー）と関連サービスを起動します。                          | `ACCESSIBLE_HOST=your.ip.address`                                        |
-| `init-prod`         | フロントエンドをビルドし、本番環境サービス（web, api等）を起動します。`vite`コンテナはビルド後削除想定。 | `ACCESSIBLE_HOST=your.ip.address` <br> `port=8080`                       |
+| `init-prod`         | フロントエンドをビルドし、本番環境サービス（web, api等）を起動します。 `port`引数でポート指定可能。 | `ACCESSIBLE_HOST=your.ip.address` <br> `port=8080`                       |
 | `up`                | 指定されたプロファイルとサービスのコンテナをフォアグラウンドでビルド・起動します。                      | `p="dev"` <br> `p="prod" t="api"`                                        |
 | `up-d`              | 指定されたプロファイルとサービスのコンテナをデタッチモードでビルド・起動します。                        | `p="dev"` <br> `p="prod"`                                                |
 | `build`             | 特定のサービスをビルドし、デタッチモードで起動します。                                                  | `t=api`                                                                  |
 | `save-backup`       | MySQLデータベースのバックアップを `mysql/backups/YYYYMMDD-HHMMSS/` に保存します。                       |                                                                          |
-| `attach-backup`     | 指定されたバックアップからMySQLデータベースをリストアします。                                           | `backup_name=YYYYMMDD-HHMMSS`                                            |
+| `restore-backup`    | 指定されたバックアップ(`backup_id`で指定)からMySQLデータベースをリストアします。                                 | `backup_id=YYYYMMDD-HHMMSS`                                            |
 | `cache-clear`       | Dockerビルダーのキャッシュを削除します。                                                              |                                                                          |
 | `attach-usb`        | (WSLユーザー向け) USB FeliCaリーダーをWSLにアタッチします。                                           |                                                                          |
 
 **引数の説明:**
-* `p="<プロファイル名>"`: Docker Composeのプロファイルを指定します (例: `dev`, `prod`)。複数指定も可能です (例: `p="dev prod"`)。
+* `p="<プロファイル名>"`: Docker Composeのプロファイルを指定します (例: `dev`, `prod`)。複数指定も可能です (例: `p="dev prod"` )。
 * `t=<サービス名>`: Docker Composeの特定のサービス名を指定します (例: `vite`, `api`, `web`)。
 * `ACCESSIBLE_HOST=<IPまたはホスト名>`: `init-dev` や `init-prod` 実行時に表示されるアクセスURLのホスト部分を指定します。
 * `port=<ポート番号>`: `init-prod` 実行時に `web` サービスを外部公開する際のポート番号を指定します。指定しない場合は公開されません。
-* `backup_name=<名前>`: `attach-backup` 実行時にリストアするバックアップのディレクトリ名を指定します (例: `YYYYMMDD-HHMMSS`)。
+* `backup_id=<ID(タイムスタンプ)>`: `restore-backup` 実行時にリストアするバックアップのディレクトリ名を指定します (例: `YYYYMMDD-HHMMSS`)。
 
