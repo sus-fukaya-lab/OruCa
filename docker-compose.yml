@@ -43,6 +43,8 @@ services:
     container_name: OruCa_mysql
     env_file:
       - .env
+    cap_add:
+      - SYS_NICE
     volumes:
       - ./mysql/data/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql

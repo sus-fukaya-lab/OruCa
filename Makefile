@@ -1,7 +1,7 @@
 # Makefile for OruCa Project
 
 # .PHONYターゲットは、同名のファイルが存在する場合でもコマンドが実行されるようにします。
-.PHONY: help init-dev init-prod up up-d build cache-clear attach-usb save-backup attach-backup
+.PHONY: help init-dev init-prod up up-d build cache-clear attach-usb save-backup restore-backup
 
 # --- 変数定義 ---
 # ACCESSIBLE_HOST: Webアプリケーションにアクセスするためのホスト名またはIPアドレス
@@ -15,14 +15,14 @@ ACCESSIBLE_HOST ?= $(if $(strip $(DETECTED_IP)),$(DETECTED_IP),localhost)
 # port: init-prod でwebサービスを公開する際のホスト側ポート (オプション)
 port ?=
 
-# backup_name: attach-backup で使用するバックアップのディレクトリ名 (例: YYYYMMDD-HHMMSS)
-backup_name ?=
+# backup_id: restore-backup で使用するバックアップのディレクトリ名 (例: YYYYMMDD-HHMMSS)
+backup_id ?=
 
 # --- ヘルプ表示 ---
 help:
 	@echo "OruCa Project Makefile"
 	@echo ""
-	@echo "Usage: make <target> [p=\"profile1 profile2\"] [t=service_name] [ACCESSIBLE_HOST=your.ip.address] [port=xxxx] [backup_name=YYYYMMDD-HHMMSS]"
+	@echo "Usage: make <target> [p=\"profile1 profile2\"] [t=service_name] [ACCESSIBLE_HOST=your.ip.address] [port=xxxx] [backup_id=YYYYMMDD-HHMMSS]"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  help                  Show this help message."
@@ -47,7 +47,7 @@ help:
 	@echo ""
 	@echo "  ------------------ Database Backup & Restore ------------------"
 	@echo "  save-backup           Saves a backup of the MySQL database to mysql/backups/YYYYMMDD-HHMMSS/."
-	@echo "  attach-backup backup_name=<name>"
+	@echo "  restore-backup backup_id=<name>"
 	@echo "                        Restores the MySQL database from the specified backup (e.g., YYYYMMDD-HHMMSS)."
 	@echo ""
 	@echo "  ------------------ Utility Commands ------------------"
@@ -59,37 +59,37 @@ help:
 	@echo "  t=<service_name>      Specific service name (e.g., \"vite\", \"web\", \"api\")."
 	@echo "  ACCESSIBLE_HOST=<ip>  Hostname or IP to access the web application."
 	@echo "  port=<port_number>    (For init-prod) Exposes the web service on the specified host port."
-	@echo "  backup_name=<name>    (For attach-backup) Directory name of the backup to restore (e.g., YYYYMMDD-HHMMSS)."
+	@echo "  backup_id=<id(timestamp)>    (For restore-backup) Directory name of the backup to restore (e.g., YYYYMMDD-HHMMSS)."
 	@echo ""
 
 # --- Docker Compose Commands ---
 # docker compose up --build (フォアグラウンド)
 up:
 	@echo "🚀 Bringing up services with profiles [$(p)] and specific services [$(t)] (foreground)..."
-	docker compose $(foreach prof,$(p),--profile $(prof)) up --build $(t)
+	@docker compose $(foreach prof,$(p),--profile $(prof)) up --build $(t)
 
 # docker compose up --build -d (デタッチモード)
 up-d:
 	@echo "🚀 Bringing up services with profiles [$(p)] and specific services [$(t)] (detached)..."
-	docker compose $(foreach prof,$(p),--profile $(prof)) up --build -d $(t)
+	@docker compose $(foreach prof,$(p),--profile $(prof)) up --build -d $(t)
 
 # 特定のサービスをビルドしてデタッチモードで起動
 build:
 	@echo "🛠️ Building and starting service [$(t)] in detached mode..."
-	docker compose up -d --build $(t)
+	@docker compose up -d --build $(t)
 
 # --- Utility Commands ---
 # Dockerビルドキャッシュのクリア
 cache-clear:
 	@echo "🧹 Clearing Docker builder cache..."
-	docker builder prune -a
+	@docker builder prune -a
 	@echo "✅ Docker builder cache cleared."
 
 # USBデバイスのWSLへのアタッチ
 attach-usb:
 	@echo "🔌 Attempting to attach USB FeliCa reader to WSL..."
 	@echo "   Please ensure you are running this from PowerShell on Windows if WSL is involved."
-	./usb-wsl-attach.ps1
+	@./usb-wsl-attach.ps1
 	@echo "✅ USB attach script executed. Check WSL for device."
 
 # --- Project Initialization ---
@@ -114,13 +114,13 @@ init-prod:
 	@echo "🔄 Initializing OruCa Production Environment: Full Build and Deploy"
 	@echo "---------------------------------------------------------------------"
 	@echo "➡️ STEP 1: Building Docker images for 'dev' (for vite build) & 'prod' profiles..."
-	docker compose --profile dev --profile prod build
+	@docker compose --profile dev --profile prod build
 	@echo "✅ Docker images built."
 	@echo "---------------------------------------------------------------------"
 	@echo "➡️ STEP 2: Building frontend application in 'vite' container..."
 	@echo "   Output will be in ./vite/dist/"
-	mkdir -p ./vite/dist
-	docker compose --profile dev run --rm vite yarn build
+	@mkdir -p ./vite/dist
+	@docker compose --profile dev run --rm vite yarn build
 	@echo "✅ Frontend application built."
 	@echo "---------------------------------------------------------------------"
 	@echo "➡️ STEP 3: Starting all 'prod' profile services (web, api, mysql, nfc)..."
@@ -161,9 +161,9 @@ CURRENT_BACKUP_DIR := $(BACKUP_ROOT_DIR)/$(TIMESTAMP)
 # 出力結果をホスト側の $(CURRENT_BACKUP_DIR)/backup.sql ファイルにリダイレクト
 save-backup:
 	@echo "💾 Saving database backup..."
-	mkdir -p $(CURRENT_BACKUP_DIR)
+	@mkdir -p $(CURRENT_BACKUP_DIR)
 	@echo "   Backup directory: $(CURRENT_BACKUP_DIR)"
-	docker compose exec -T mysql sh -c 'mysqldump --no-tablespaces -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE' > $(CURRENT_BACKUP_DIR)/backup.sql
+	@docker compose exec -T mysql sh -c 'mysqldump --no-tablespaces -uroot -p$$MYSQL_ROOT_PASSWORD $$MYSQL_DATABASE' > $(CURRENT_BACKUP_DIR)/backup.sql
 	@echo "✅ Database backup saved to $(CURRENT_BACKUP_DIR)/backup.sql"
 
 
@@ -171,17 +171,20 @@ save-backup:
 # cat $$BACKUP_FILE_PATH : バックアップファイルの内容を標準出力へ
 # | : パイプ。左側のコマンドの標準出力を右側のコマンドの標準入力へ渡す
 # docker compose exec -T mysql sh -c 'mysql ...' : mysqlコンテナ内でmysqlコマンドを実行
-attach-backup:
-	@if [ -z "$(backup_name)" ]; then \
-		echo "❌ Error: backup_name argument is required. Example: make attach-backup backup_name=YYYYMMDD-HHMMSS"; \
+restore-backup:
+	@# backup_id 引数が指定されているかチェック
+	@if [ -z "$(backup_id)" ]; then \
+		echo "❌ Error: backup_id argument is required. Example: make restore-backup backup_id=YYYYMMDD-HHMMSS"; \
 		exit 1; \
 	fi
-	@BACKUP_FILE_PATH="$(BACKUP_ROOT_DIR)/$(backup_name)/backup.sql"; \
-	if [ ! -f "$$BACKUP_FILE_PATH" ]; then \
-		echo "❌ Error: Backup file $$BACKUP_FILE_PATH not found."; \
-		exit 1; \
-	fi
-	@echo "🔄 Restoring database from $$BACKUP_FILE_PATH..."
-	cat $$BACKUP_FILE_PATH | docker compose exec -T mysql sh -c 'mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE'
-	@echo "✅ Database restored from $$BACKUP_FILE_PATH."
-
+	@# リストア対象のバックアップファイルのフルパスを構築
+	@BACKUP_FILE_PATH="$(BACKUP_ROOT_DIR)/$(backup_id)/backup.sql"; \
+		if [ ! -f "$$BACKUP_FILE_PATH" ]; then \
+			echo "❌ Error: Backup file $$BACKUP_FILE_PATH not found."; \
+			exit 1; \
+		fi;\
+		echo "🔄 Restoring database from $$BACKUP_FILE_PATH..."\
+		echo "$(BACKUP_ROOT_DIR)/$(backup_id)/backup.sql"\
+		cat $$BACKUP_FILE_PATH # ユーザーが追加したデバッグ行\
+		cat $$BACKUP_FILE_PATH | docker compose exec -T mysql sh -c 'set -x; mysql -vvv -uroot -p$$MYSQL_ROOT_PASSWORD $$MYSQL_DATABASE'\
+		echo "✅ Database restored from $$BACKUP_FILE_PATH."
