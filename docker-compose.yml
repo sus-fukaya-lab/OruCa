@@ -4,14 +4,14 @@ services:
     build:
       context: ./vite
       dockerfile: Dockerfile
-    container_name: OruCa_vite
+    container_name: oruca-vite
     volumes:
       - ./vite:/app:rw
     ports: # 開発時に直接アクセスしたい場合はコメント解除
       - "4000:4000"
     command: ["tail","-f","/dev/null"]
     networks:
-      - oruca_network 
+      - default 
     profiles:
       - "dev"
 
@@ -19,7 +19,7 @@ services:
   web:
     build:
       context: web
-    container_name: OruCa_web
+    container_name: oruca-web
     # ports: # リバースプロキシ経由のためコメントアウト
       # - "4040:80"
     volumes:
@@ -27,9 +27,14 @@ services:
     depends_on:
       - api # apiがmysqlに依存するため、これでmysql起動後になる
     networks:
-      - oruca_network
+      - default
+      - fukaya-lab-network
     profiles:
       - "prod"
+    labels:
+      caddy: oruca.fukaya-sus.lab
+      caddy.reverse_proxy: "{{upstreams 80}}"
+      caddy.tls: "internal"
 
   # mysql
   mysql:
@@ -40,7 +45,7 @@ services:
         MYSQL_USER : ${MYSQL_USER}
         MYSQL_PASSWORD : ${MYSQL_PASSWORD}
         MYSQL_ROOT_PASSWORD : ${MYSQL_ROOT_PASSWORD}
-    container_name: OruCa_mysql
+    container_name: oruca-mysql
     env_file:
       - .env
     cap_add:
@@ -57,13 +62,13 @@ services:
       start_period: 10s
       timeout: 10s
     networks:
-      - oruca_network
+      - default
 
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: OruCa_api
+    container_name: oruca-api
     volumes:
       - ./api:/app:rw
     env_file: # DATABASE_URLは.envファイルまたはアプリケーションコード内で設定される想定
@@ -73,10 +78,10 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - oruca_network
+      - default
 
   nfc:
-    container_name: OruCa_nfc
+    container_name: oruca-nfc
     build:
       context: nfc
     init: true
@@ -91,13 +96,15 @@ services:
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
     networks:
-      - oruca_network
+      - default
 
 
 networks:
-  oruca_network : # リバースプロキシのdocker-compose.ymlで定義・作成されるネットワークを参照
+  default : # リバースプロキシのdocker-compose.ymlで定義・作成されるネットワークを参照
+    driver: bridge
+  fukaya-lab-network:
     external: true
-    name: oruca_network # リバースプロキシ側で指定した固定名と合わせる
+    name: fukaya-lab-network
 
 volumes:
   mysql_data: {}

@@ -21,9 +21,10 @@ interface IDBConfig extends mysql.PoolOptions {
 	user:string;
 	password:string;
 	database:string;
-	waitForConnections: boolean,
-	connectionLimit: number,
-	queueLimit: number,
+	waitForConnections: boolean;
+	connectionLimit: number;
+	queueLimit: number;
+	connectTimeout: number;
 }
 
 export const SERVER_CONFIG:IServerConfig = {
@@ -38,7 +39,8 @@ export const DB_CONFIG:IDBConfig = {
 	database: getEnv("MYSQL_DATABASE"),
 	waitForConnections:true,
 	connectionLimit:3,
-	queueLimit:0
+	queueLimit:0,
+	connectTimeout: 60000 // 60秒に設定 (ミリ秒)
 }
 
 export type TWsProcessType = "ack" | "log/fetch" | "log/write" | "user/auth" | "user/update_name" | "user/fetchToken" | "user/delete" | "slackBot/post";
